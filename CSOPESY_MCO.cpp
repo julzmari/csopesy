@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <sstream>
 #include <cstdlib>
+#include <regex>
+
 using namespace std;
 
 // Struct to hold screen data
@@ -82,6 +84,11 @@ void handleScreen(ScreenInfo& screen) {
     }
 }
 
+void trimSpaces(string& str) {
+    str.erase(0, str.find_first_not_of(" \t"));
+    str.erase(str.find_last_not_of(" \t") + 1);
+}
+
 // Create or resume screen
 void createOrResumeScreen(const string& cmd, const string& name) {
     if (cmd == "screen -s") {
@@ -103,12 +110,17 @@ void createOrResumeScreen(const string& cmd, const string& name) {
 // Main CLI
 int main() {
     string command;
+    regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
+    smatch match;
 
     printHeader();
 
     while (true) {
         cout << "\nEnter command: ";
         getline(cin, command);
+
+        // Trim leading and trailing spaces
+        trimSpaces(command);
 
         if (command == "initialize" ||
             command == "screen" ||
@@ -130,14 +142,17 @@ int main() {
             cout << "exit command recognized. Exiting program." << endl;
             break;
         }
-        else if (command.rfind("screen -s ", 0) == 0 || command.rfind("screen -r ", 0) == 0) {
+        else if (regex_match(command, match, pattern)) {
             string prefix = command.substr(0, 9); // "screen -s" or "screen -r"
             string name = command.substr(9);
-            // Trim spaces
-            name.erase(0, name.find_first_not_of(" \t"));
-            name.erase(name.find_last_not_of(" \t") + 1);
 
-            if (!name.empty()) {
+            // Trim leading and trailing spaces
+            trimSpaces(name);
+
+            if (name.find(' ') != string::npos) {
+                cout << "Screen name cannot contain spaces. Usage: screen -s <name> or screen -r <name>" << endl;
+            }
+            else if (!name.empty()) {
                 createOrResumeScreen(prefix, name);
             } else {
                 cout << "Please provide a screen name. Usage: screen -s <name> or screen -r <name>" << endl;
