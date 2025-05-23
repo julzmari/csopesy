@@ -6,19 +6,12 @@
 #include <sstream>
 #include <cstdlib>
 #include <regex>
+#include "console.h"
 
 using namespace std;
 
-// Struct to hold screen data
-struct ScreenInfo {
-    string name;
-    int currentLine = 1;
-    int totalLines = 100;
-    string timestamp;
-};
-
 // Global map to track screens
-map<string, ScreenInfo> screens;
+map<string, console> screens;
 
 // Get formatted timestamp
 string getCurrentTimestamp() {
@@ -51,39 +44,6 @@ void printHeader() {
     cout << RESET;
 }
 
-// Simulate inside-screen interaction
-void handleScreen(ScreenInfo& screen) {
-    #ifdef _WIN32
-        system("cls");
-    #else
-        system("clear");
-    #endif
-
-    cout << "=== Screen: " << screen.name << " ===" << endl;
-    cout << "Process: " << screen.name << endl;
-    cout << "Instruction: Line " << screen.currentLine << " / " << screen.totalLines << endl;
-    cout << "Created at: " << screen.timestamp << endl;
-
-    string input;
-    while (true) {
-        cout << "\n(" << screen.name << ") Type 'exit' to return to main menu: ";
-        getline(cin, input);
-
-        if (input == "exit") {
-            #ifdef _WIN32
-                system("cls");
-            #else
-                system("clear");
-            #endif
-
-            printHeader();
-            break;
-        } else {
-            cout << "Unknown screen command. Only 'exit' is supported." << endl;
-        }
-    }
-}
-
 void trimSpaces(string& str) {
     str.erase(0, str.find_first_not_of(" \t"));
     str.erase(str.find_last_not_of(" \t") + 1);
@@ -95,12 +55,14 @@ void createOrResumeScreen(const string& cmd, const string& name) {
         if (screens.count(name)) {
             cout << "Screen '" << name << "' already exists. Use 'screen -r " << name << "' to resume." << endl;
         } else {
-            screens[name] = {name, 1, 100, getCurrentTimestamp()};
-            handleScreen(screens[name]);
+            screens[name] = console(name, getCurrentTimestamp());
+            screens[name].handleScreen();
+            printHeader();
         }
     } else if (cmd == "screen -r") {
         if (screens.count(name)) {
-            handleScreen(screens[name]);
+            screens[name].handleScreen();
+            printHeader();
         } else {
             cout << "No screen found with name '" << name << "'. Use 'screen -s " << name << "' to create one." << endl;
         }
