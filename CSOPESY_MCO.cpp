@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <string>
 #include <map>
 #include <ctime>
@@ -54,16 +54,19 @@ void createOrResumeScreen(const string& cmd, const string& name) {
     if (cmd == "screen -s") {
         if (screens.count(name)) {
             cout << "Screen '" << name << "' already exists. Use 'screen -r " << name << "' to resume." << endl;
-        } else {
+        }
+        else {
             screens[name] = console(name, getCurrentTimestamp());
             screens[name].handleScreen();
             printHeader();
         }
-    } else if (cmd == "screen -r") {
+    }
+    else if (cmd == "screen -r") {
         if (screens.count(name)) {
             screens[name].handleScreen();
             printHeader();
-        } else {
+        }
+        else {
             cout << "No screen found with name '" << name << "'. Use 'screen -s " << name << "' to create one." << endl;
         }
     }
@@ -92,11 +95,11 @@ int main() {
             cout << command << " command recognized. Doing something." << endl;
         }
         else if (command == "clear") {
-            #ifdef _WIN32
-                system("cls");
-            #else
-                system("clear");
-            #endif
+#ifdef _WIN32
+            system("cls");
+#else
+            system("clear");
+#endif
 
             printHeader();
         }
@@ -116,7 +119,8 @@ int main() {
             }
             else if (!name.empty()) {
                 createOrResumeScreen(prefix, name);
-            } else {
+            }
+            else {
                 cout << "Please provide a screen name. Usage: screen -s <name> or screen -r <name>" << endl;
             }
         }
