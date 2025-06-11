@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <regex>
 #include "console.h"
+#include "Config.h"
 
 using namespace std;
 
@@ -72,12 +73,20 @@ void createOrResumeScreen(const string& cmd, const string& name) {
     }
 }
 
-// Main CLI
-int main() {
+void clearScreen() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+void startEmulator() {
     string command;
     regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
     smatch match;
 
+	clearScreen();
     printHeader();
 
     while (true) {
@@ -95,16 +104,11 @@ int main() {
             cout << command << " command recognized. Doing something." << endl;
         }
         else if (command == "clear") {
-#ifdef _WIN32
-            system("cls");
-#else
-            system("clear");
-#endif
-
+			clearScreen();
             printHeader();
         }
         else if (command == "exit") {
-            cout << "exit command recognized. Exiting program." << endl;
+            cout << "Exit command recognized. Exiting program." << endl;
             break;
         }
         else if (regex_match(command, match, pattern)) {
@@ -124,10 +128,37 @@ int main() {
                 cout << "Please provide a screen name. Usage: screen -s <name> or screen -r <name>" << endl;
             }
         }
+        else if (command == "screen --help") {
+
+        }
         else {
             cout << "Unknown command. Please try again." << endl;
         }
     }
+}
 
-    return 0;
+int main() {
+
+    string command;
+    Config config;
+
+    while (true) {
+        cout << "Enter command: ";
+        getline(cin, command);
+
+        // Trim leading and trailing spaces
+        trimSpaces(command);
+
+        if (command == "initialize") {
+            startEmulator();
+            break;
+        }
+        else if (command == "exit") {
+            cout << "exit command recognized. Exiting program." << endl;
+            break;
+        }
+        else {
+            cout << "Unknown command. Please try again." << endl;
+        }
+    }
 }
