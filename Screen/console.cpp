@@ -1,4 +1,7 @@
 #include "console.h"
+#include "process.h"
+
+class process;
 
 #ifdef _WIN32
 #include <windows.h>

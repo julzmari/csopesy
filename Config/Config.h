@@ -5,11 +5,14 @@
 
 using namespace std;
 
-enum class SchedulerAlgorithm {
-	FCFS, RR
+enum class SchedulerAlgorithm
+{
+	FCFS,
+	RR
 };
 
-class Config {
+class Config
+{
 
 private:
 	int numCPU;
@@ -21,8 +24,7 @@ private:
 	int delaysPerExec;
 
 public:
-
-	Config(const string& filename = "config.txt");
+	Config(const string &filename = "config/config.txt");
 
 	void printConfig() const;
 

@@ -16,6 +16,9 @@ include_directories(Screen)
 include_directories(Process)
 include_directories(Config)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
+
 # Add source to this project's executable.
 add_executable (CSOPESY_MCO 
 				"CSOPESY_MCO.cpp" "OsEmulator.h" "Config/Config.h" "Config/Config.cpp"  
