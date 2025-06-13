@@ -21,9 +21,9 @@ Config::Config(const string& filename) :
 {
 
     vector<fs::path> possiblePaths = {
-        filename,                          
-        fs::path("..") / filename,         
-        fs::path("../..") / filename,      
+        filename,
+        fs::path("..") / filename,
+        fs::path("../..") / filename,
         fs::path("../../..") / filename
     };
 
@@ -91,9 +91,10 @@ Config::Config(const string& filename) :
                 iss >> maxIns;
                 if (maxIns < minIns) {
                     throw out_of_range("max-ins must be >= min-ins");
-                } else if (maxIns < 1 || maxIns > 4294967296) {
+                }
+                else if (maxIns < 1 || maxIns > 4294967296) {
                     throw out_of_range("max-ins must be between 1 and 4294967296");
-				}
+                }
             }
             else if (key == "delay-per-exec") {
                 iss >> delaysPerExec;

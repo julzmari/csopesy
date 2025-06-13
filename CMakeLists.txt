@@ -11,8 +11,17 @@ endif()
 
 project ("CSOPESY_MCO")
 
+include_directories(Command)
+include_directories(Screen)
+include_directories(Process)
+include_directories(Config)
+
 # Add source to this project's executable.
-add_executable (CSOPESY_MCO "CSOPESY_MCO.cpp" "console.h" "Config.h" "Config.cpp")
+add_executable (CSOPESY_MCO 
+				"CSOPESY_MCO.cpp" "OsEmulator.h" "Config/Config.h" "Config/Config.cpp"  
+				"Command/ICommand.h" "Command/PrintCommand.h" "Command/PrintCommand.cpp"
+				"Screen/console.h" "Screen/console.cpp"
+				"Process/process.h" "Process/process_list.h" "Process/process_list.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CSOPESY_MCO PROPERTY CXX_STANDARD 20)
