@@ -1,0 +1,63 @@
+#include "Scheduler.h"
+#include "Command/PrintCommand.h"
+
+Scheduler::Scheduler(ProcessList &plist, int numCores)
+    : processList(plist), numCores(numCores), running(false) {}
+
+void Scheduler::start()
+{
+    running = true;
+    for (int i = 0; i < numCores; ++i)
+        workers.emplace_back(&Scheduler::workerThreadFunc, this, i);
+    schedulerThread = std::thread(&Scheduler::schedulerThreadFunc, this);
+}
+
+void Scheduler::stop()
+{
+    running = false;
+    cv.notify_all();
+    for (auto &t : workers)
+        if (t.joinable())
+            t.join();
+    if (schedulerThread.joinable())
+        schedulerThread.join();
+}
+
+void Scheduler::addProcess(const process &proc)
+{
+    std::lock_guard<std::mutex> lock(queueMutex);
+    readyQueue.push(proc);
+    cv.notify_one();
+}
+
+void Scheduler::schedulerThreadFunc()
+{
+    while (running)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        cv.notify_all();
+    }
+}
+
+void Scheduler::workerThreadFunc(int coreId)
+{
+    while (running)
+    {
+        process proc;
+        {
+            std::unique_lock<std::mutex> lock(queueMutex);
+            cv.wait(lock, [this]
+                    { return !readyQueue.empty() || !running; });
+            if (!running)
+                break;
+            proc = readyQueue.front();
+            readyQueue.pop();
+        }
+        for (const auto &instr : proc.getInstructions())
+        {
+            PrintCommand printCmd(proc.getPid(), instr);
+            printCmd.execute(coreId);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+}
