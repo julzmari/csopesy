@@ -145,6 +145,7 @@ void startEmulator()
         else if (command == "exit")
         {
             cout << "Exit command recognized. Exiting program." << endl;
+            scheduler.stop();
             break;
         }
         // create new process or resume existing screen session

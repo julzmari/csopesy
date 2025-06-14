@@ -38,19 +38,19 @@ private:
 	ProcessState state;
 	std::string processName;
 	std::vector<std::shared_ptr<PrintCommand>> instructions;
-	int currentLine;
+	int currentLine = 0;
 	std::string creationTime;
 
 public:
 	// Constructor
 	process(int pid, int coreId, int priority, const std::string &processName, const std::vector<std::shared_ptr<PrintCommand>> &instructions)
-		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions), currentLine(0)
+		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions)
 	{
 		creationTime = getCurrentTimeString();
 		state = ProcessState::NEW;
 	}
 
-	process() : pid(0), coreId(-1), priority(0), processName(""), currentLine(0)
+	process() : pid(0), coreId(-1), priority(0), processName("")
 	{
 		creationTime = getCurrentTimeString();
 		state = ProcessState::NEW;
@@ -138,35 +138,22 @@ public:
 	{
 		std::string coreIdStr = (coreId < 0) ? "N/A" : std::to_string(coreId);
 
-		std::string stateStr;
-		switch (state)
+		if (state == ProcessState::TERMINATED)
 		{
-		case ProcessState::NEW:
-			stateStr = "NEW";
-			break;
-		case ProcessState::READY:
-			stateStr = "READY";
-			break;
-		case ProcessState::RUNNING:
-			stateStr = "RUNNING";
-			break;
-		case ProcessState::WAITING:
-			stateStr = "WAITING";
-			break;
-		case ProcessState::TERMINATED:
-			stateStr = "TERMINATED";
-			break;
-		default:
-			stateStr = "UNKNOWN";
-			break;
+			std::cout << std::left << std::setw(15)
+				<< processName << std::setw(25)
+				<< creationTime << std::setw(13)
+				<< "Finished" << "Line: "
+				<< currentLine << "/" << getLineCount() << "\n";
 		}
-
-		std::cout << std::left << std::setw(15)
-				  << processName << std::setw(25)
-				  << creationTime << std::setw(8)
-				  << "Core: " << std::setw(5)
-				  << coreIdStr << "Line: "
-				  << currentLine << "/" << getLineCount() << "\n";
+		else {
+			std::cout << std::left << std::setw(15)
+				<< processName << std::setw(25)
+				<< creationTime << std::setw(8)
+				<< "Core: " << std::setw(5)
+				<< coreIdStr << "Line: "
+				<< currentLine << "/" << getLineCount() << "\n";
+		}
 	}
 
 	void executeNextInstruction(int coreId)

@@ -39,7 +39,7 @@ void Scheduler::schedulerThreadFunc()
 {
     while (running)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         cv.notify_all();
     }
 }
@@ -64,8 +64,9 @@ void Scheduler::workerThreadFunc(int coreId)
         for (int i = 0; i < proc.getLineCount(); ++i)
         {
             proc.executeNextInstruction(coreId);
-            proc.setCurrentLine(i + 1);
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            //proc.setCurrentLine(i + 1);
+			processList.updateProcess(proc);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
 
         proc.setState(ProcessState::TERMINATED);

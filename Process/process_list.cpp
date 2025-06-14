@@ -61,8 +61,18 @@ void ProcessList::printAllProcesses()
 		std::cout << "No processes found." << std::endl;
 		return;
 	}
-	for (const auto &[pid, proc] : processMap)
-	{
-		proc.printProcessInfo();
+	std::cout << "-----------------------------------\nRunning processes:\n";
+	for (const auto& [pid, proc] : processMap) {
+		if (proc.getState() == ProcessState::RUNNING) {
+			proc.printProcessInfo();
+		}
 	}
+
+	std::cout << "\nFinished processes:\n";
+	for (const auto& [pid, proc] : processMap) {
+		if (proc.getState() == ProcessState::TERMINATED) {
+			proc.printProcessInfo();
+		}
+	}
+	std::cout << "-----------------------------------";
 }
