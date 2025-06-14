@@ -4,11 +4,20 @@
 #include <cstdlib>
 #include "process_list.h"
 #include "console.h"
+#include "Scheduler.h"
+#include "PrintCommand.h"
 
-using namespace std;
+using std::cin;
+using std::cout;
+using std::endl;
+using std::regex;
+using std::smatch;
+using std::string;
+
 ProcessList processes;
 
-void clearScreen() {
+void clearScreen()
+{
 #ifdef _WIN32
     system("cls");
 #else
@@ -16,12 +25,14 @@ void clearScreen() {
 #endif
 }
 
-void trimSpaces(string& str) {
+void trimSpaces(string &str)
+{
     str.erase(0, str.find_first_not_of(" \t"));
     str.erase(str.find_last_not_of(" \t") + 1);
 }
 
-void printHeader() {
+void printHeader()
+{
     const string RED = "\033[1;31m";
     const string GREEN = "\033[1;32m";
     const string YELLOW = "\033[1;33m";
@@ -43,40 +54,71 @@ void printHeader() {
 }
 
 // Create or resume screen
-void createOrResumeScreen(const string& cmd, const string& name) {
-    if (cmd == "screen -s") { // Create new process
-        if (processes.ifProcessNameExists(name)) {
+void createOrResumeScreen(const string &cmd, const string &name)
+{
+    if (cmd == "screen -s")
+    { // Create new process
+        if (processes.ifProcessNameExists(name))
+        {
             cout << "Screen '" << name << "' already exists. Use 'screen -r " << name << "' to resume." << endl;
         }
-        else {
+        else
+        {
             std::vector<std::string> instructions;
-			processes.addNewProcess(-1, 0, name, instructions);
-			processes.printAllProcesses();
+            processes.addNewProcess(-1, 0, name, instructions);
+            processes.printAllProcesses();
         }
     }
-    else if (cmd == "screen -r") { // Resume existing process
-        if (processes.ifProcessNameExists(name)) {
+    else if (cmd == "screen -r")
+    { // Resume existing process
+        if (processes.ifProcessNameExists(name))
+        {
             int pid = processes.findProcessByName(name);
             process curr_proc = processes.findProcess(pid);
             console proc_console(curr_proc);
             proc_console.handleScreen();
-			printHeader();
+            printHeader();
         }
-        else {
+        else
+        {
             cout << "No screen found with name '" << name << "'. Use 'screen -s " << name << "' to create one." << endl;
         }
     }
 }
 
-void startEmulator() {
+void listScreens()
+{
+    processes.printAllProcesses();
+}
+
+void startEmulator()
+{
     string command;
     regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
     smatch match;
+    Scheduler scheduler(processes, 4);
+
+    // PRINT COMMMANDS
+    for (int i = 1; i <= 10; ++i)
+    {
+        std::vector<std::string> instructions;
+        for (int j = 1; j <= 100; ++j)
+        {
+            instructions.push_back("Print command " + std::to_string(j));
+        }
+
+        processes.addNewProcess(-1, 0, "Process" + std::to_string(i), instructions);
+        int pid = processes.findProcessByName("Process" + std::to_string(i));
+        scheduler.addProcess(processes.findProcess(pid));
+    }
+
+    scheduler.start();
 
     clearScreen();
     printHeader();
 
-    while (true) {
+    while (true)
+    {
         cout << "\nEnter command: ";
         getline(cin, command);
 
@@ -87,39 +129,51 @@ void startEmulator() {
             command == "screen" ||
             command == "scheduler-test" ||
             command == "scheduler-stop" ||
-            command == "report-util") {
+            command == "report-util")
+        {
             cout << command << " command recognized. Doing something." << endl;
         }
-        else if (command == "clear") {
+        else if (command == "screen -ls")
+        {
+            listScreens();
+        }
+        else if (command == "clear")
+        {
             clearScreen();
             printHeader();
         }
-        else if (command == "exit") {
+        else if (command == "exit")
+        {
             cout << "Exit command recognized. Exiting program." << endl;
             break;
         }
         // create new process or resume existing screen session
-        else if (regex_match(command, match, pattern)) {
+        else if (regex_match(command, match, pattern))
+        {
             string prefix = command.substr(0, 9); // "screen -s" or "screen -r"
             string name = command.substr(9);
 
             // Trim leading and trailing spaces
             trimSpaces(name);
 
-            if (name.find(' ') != string::npos) {
+            if (name.find(' ') != string::npos)
+            {
                 cout << "Screen name cannot contain spaces. Usage: screen -s <name> or screen -r <name>" << endl;
             }
-            else if (!name.empty()) {
+            else if (!name.empty())
+            {
                 createOrResumeScreen(prefix, name);
             }
-            else {
+            else
+            {
                 cout << "Please provide a screen name. Usage: screen -s <name> or screen -r <name>" << endl;
             }
         }
-        else if (command == "screen --help") {
-
+        else if (command == "screen --help")
+        {
         }
-        else {
+        else
+        {
             cout << "Unknown command. Please try again." << endl;
         }
     }

@@ -1,41 +1,68 @@
 #include "process_list.h"
 
-process ProcessList::findProcess(int pid) {
+process ProcessList::findProcess(int pid)
+{
 	auto it = processMap.find(pid);
-	if (it != processMap.end()) {
+	if (it != processMap.end())
+	{
 		return it->second;
 	}
-	else {
+	else
+	{
 		return process(-1, -1, -1, "Unknown", {}); // Return an invalid process if not found
 	}
 }
 
-bool ProcessList::ifProcessNameExists(const std::string& processName) {
+bool ProcessList::ifProcessNameExists(const std::string &processName)
+{
 	return nameToPidMap.find(processName) != nameToPidMap.end();
 }
 
-int ProcessList::findProcessByName(const std::string& processName) {
-    auto it = nameToPidMap.find(processName);
-    if (it != nameToPidMap.end()) {
+int ProcessList::findProcessByName(const std::string &processName)
+{
+	auto it = nameToPidMap.find(processName);
+	if (it != nameToPidMap.end())
+	{
 		return it->second;
-    } else {
+	}
+	else
+	{
 		return -1;
-    }
+	}
 }
 
-void ProcessList::addNewProcess(int coreId, int priority, const std::string& processName, const std::vector<std::string>& instructions) {
+void ProcessList::addNewProcess(int coreId, int priority, const std::string &processName, const std::vector<std::string> &instructions)
+{
 	int newPid = ++lastPid;
-	process newProc(newPid, coreId, priority, processName, instructions);
+	std::vector<std::shared_ptr<PrintCommand>> printCommands;
+	for (const auto &instr : instructions)
+	{
+		printCommands.push_back(std::make_shared<PrintCommand>(newPid, instr));
+	}
+	process newProc(newPid, coreId, priority, processName, printCommands);
 	processMap[newPid] = newProc;
 	nameToPidMap[processName] = newPid;
 }
 
-void ProcessList::printAllProcesses() {
-	if (processMap.empty()) {
+void ProcessList::updateProcess(const process &proc)
+{
+	int pid = proc.getPid();
+	auto it = processMap.find(pid);
+	if (it != processMap.end())
+	{
+		it->second = proc;
+	}
+}
+
+void ProcessList::printAllProcesses()
+{
+	if (processMap.empty())
+	{
 		std::cout << "No processes found." << std::endl;
 		return;
 	}
-	for (const auto& [pid, proc] : processMap) {
+	for (const auto &[pid, proc] : processMap)
+	{
 		proc.printProcessInfo();
 	}
 }

@@ -15,6 +15,7 @@ include_directories(Command)
 include_directories(Screen)
 include_directories(Process)
 include_directories(Config)
+include_directories(Scheduler)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
@@ -24,7 +25,9 @@ add_executable (CSOPESY_MCO
 				"CSOPESY_MCO.cpp" "OsEmulator.h" "Config/Config.h" "Config/Config.cpp"  
 				"Command/ICommand.h" "Command/PrintCommand.h" "Command/PrintCommand.cpp"
 				"Screen/console.h" "Screen/console.cpp"
-				"Process/process.h" "Process/process_list.h" "Process/process_list.cpp")
+				"Process/myProcess.h" "Process/process_list.h" "Process/process_list.cpp"
+				"Scheduler/Scheduler.h" "Scheduler/Scheduler.cpp"
+				)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CSOPESY_MCO PROPERTY CXX_STANDARD 20)

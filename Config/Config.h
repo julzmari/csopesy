@@ -3,8 +3,6 @@
 
 #include <string>
 
-using namespace std;
-
 enum class SchedulerAlgorithm
 {
 	FCFS,
@@ -24,8 +22,7 @@ private:
 	int delaysPerExec;
 
 public:
-	Config(const string &filename = "config/config.txt");
-
+	Config(const std::string &filename);
 	void printConfig() const;
 
 	int getNumCPU() const { return numCPU; }

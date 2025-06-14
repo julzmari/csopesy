@@ -7,7 +7,7 @@ using namespace std;
 int main() {
 
     string command;
-    Config config;
+    Config config("Config/config.txt");
 
     while (true) {
         cout << "Enter command: ";

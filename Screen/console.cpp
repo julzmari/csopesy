@@ -1,5 +1,5 @@
 #include "console.h"
-#include "process.h"
+#include "myProcess.h"
 
 class process;
 

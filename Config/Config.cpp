@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <filesystem>
 
-namespace fs = filesystem;
+namespace fs = std::filesystem;
 using namespace std;
 
 Config::Config(const string& filename) :
@@ -20,7 +20,7 @@ Config::Config(const string& filename) :
     delaysPerExec(0)
 {
 
-    vector<fs::path> possiblePaths = {
+    std::vector<fs::path> possiblePaths = {
         filename,
         fs::path("..") / filename,
         fs::path("../..") / filename,
@@ -29,7 +29,7 @@ Config::Config(const string& filename) :
 
     ifstream file;
     for (const auto& path : possiblePaths) {
-        file.open(path);
+        file.open(path.string());
         if (file.is_open()) {
             break;
         }

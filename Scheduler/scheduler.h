@@ -1,6 +1,8 @@
 #pragma once
-#include "Process/process_list.h"
+#include <windows.h>
+#include <myProcess.h>
 #include <thread>
+#include "process_list.h"
 #include <vector>
 #include <queue>
 #include <mutex>
