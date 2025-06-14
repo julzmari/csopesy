@@ -91,12 +91,12 @@ void listScreens()
     processes.printAllProcesses();
 }
 
-void startEmulator()
+void startEmulator(Config& config)
 {
     string command;
     regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
     smatch match;
-    Scheduler scheduler(processes, 4);
+    Scheduler scheduler(processes, config.getNumCPU());
 
     // PRINT COMMMANDS
     for (int i = 1; i <= 10; ++i)

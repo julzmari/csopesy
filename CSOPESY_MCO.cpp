@@ -17,7 +17,7 @@ int main() {
         trimSpaces(command);
 
         if (command == "initialize") {
-            startEmulator();
+            startEmulator(config);
             break;
         }
         else if (command == "exit") {
