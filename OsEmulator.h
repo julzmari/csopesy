@@ -60,6 +60,7 @@ void createOrResumeScreen(const string& cmd, const string& name) {
             process curr_proc = processes.findProcess(pid);
             console proc_console(curr_proc);
             proc_console.handleScreen();
+			printHeader();
         }
         else {
             cout << "No screen found with name '" << name << "'. Use 'screen -s " << name << "' to create one." << endl;

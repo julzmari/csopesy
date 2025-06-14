@@ -26,7 +26,7 @@ void console::handleScreen() {
 
     std::string input;
     while (true) {
-        std::cout << "\n(" << proc.getProcessName() << ") Type 'exit' to return to main menu: ";
+        std::cout << "\nroot:/>";
         std::getline(std::cin, input);
 
         if (input == "exit") {

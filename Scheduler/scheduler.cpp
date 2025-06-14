@@ -53,10 +53,8 @@ void Scheduler::workerThreadFunc(int coreId)
             proc = readyQueue.front();
             readyQueue.pop();
         }
-        for (const auto &instr : proc.getInstructions())
-        {
-            PrintCommand printCmd(proc.getPid(), instr);
-            printCmd.execute(coreId);
+        for (int i = 0; i < proc.getLineCount(); ++i) {
+            proc.executeNextInstruction(coreId);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }

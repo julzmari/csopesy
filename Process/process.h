@@ -1,4 +1,5 @@
 #pragma once
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -6,6 +7,8 @@
 #include <ctime>
 #include <chrono>
 #include <sstream>
+#include <memory>
+#include "PrintCommand.h"
 
 enum class ProcessState {
 	NEW, READY, RUNNING, WAITING, TERMINATED
@@ -21,74 +24,91 @@ inline std::string getCurrentTimeString() {
 }
 
 class process {
-private:
-	int pid;
-	int coreId;
-	int priority;
-	ProcessState state;
-	std::string processName;
-	std::vector<std::string> instructions;
-	int currentLine;
-	std::string creationTime;
+	private:
+		int pid;
+		int coreId;
+		int priority;
+		ProcessState state;
+		std::string processName;
+		std::vector<std::shared_ptr<PrintCommand>> instructions;
+		int currentLine;
+		std::string creationTime;
 
-public:
-	// Constructor
-	process(int pid, int coreId, int priority, const std::string& processName, const std::vector<std::string>& instructions)
+	public:
+		// Constructor
+		process(int pid, int coreId, int priority, const std::string& processName, const std::vector<std::shared_ptr<PrintCommand>>& instructions)
 		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions), currentLine(0) {
-		creationTime = getCurrentTimeString();
-	}
-
-	process() : pid(0), coreId(0), priority(0), processName(""), instructions(), currentLine(0) {
-		creationTime = getCurrentTimeString();
-	}
-
-	// getter setters
-	int getPid() const { 
-		return pid; 
-	}
-	int getPriority() const { 
-		return priority; 
-	}
-	const std::string& getProcessName() const { 
-		return processName; 
-	}
-	void setPriority(int newPriority) {
-		priority = newPriority;
-	}
-	const std::vector<std::string>& getInstructions() const { 
-		return instructions; 
-	}
-	int getLineCount() const { 
-		return instructions.size(); 
-	}
-	int getCurrentLine() const { 
-		return currentLine; 
-	}
-	std::string getCurrentInstruction() const { 
-		return instructions[currentLine]; 
-	}
-	std::string getCreationTime() const { 
-		return creationTime; 
-	}
-
-	void addInstruction(const std::string& instruction) {
-		instructions.push_back(instruction);
-	}
-	void incrementCurrentLine() { 
-		if (currentLine < instructions.size()) {
-			currentLine++;
+			creationTime = getCurrentTimeString();
+			state = ProcessState::NEW;
 		}
-	}
-	bool isComplete() const { 
-		return currentLine >= instructions.size(); 
-	}
-	void printProcessInfo() const {
-		std::cout 
-			<< std::left << std::setw(15)
+
+		process() : pid(0), coreId(-1), priority(0), processName(""), currentLine(0) {
+			creationTime = getCurrentTimeString();
+			state = ProcessState::NEW;
+		}
+
+		// Getters and setters
+		int getPid() const {
+			return pid;
+		}
+
+		int getPriority() const {
+			return priority;
+		}
+
+		const std::string& getProcessName() const {
+			return processName;
+		}
+
+		void setPriority(int newPriority) {
+			priority = newPriority;
+		}
+
+		const std::vector<std::shared_ptr<PrintCommand>>& getInstructions() const {
+			return instructions;
+		}
+
+		int getLineCount() const {
+			return static_cast<int>(instructions.size());
+		}
+
+		int getCurrentLine() const {
+			return currentLine;
+		}
+
+		std::shared_ptr<PrintCommand> getCurrentInstruction() const {
+			if (currentLine < instructions.size())
+				return instructions[currentLine];
+			return nullptr;
+		}
+
+		std::string getCreationTime() const {
+			return creationTime;
+		}
+
+		void addInstruction(const std::shared_ptr<PrintCommand>& command) {
+			instructions.push_back(command);
+		}
+
+		bool isComplete() const {
+			return currentLine >= instructions.size();
+		}
+
+		void printProcessInfo() const {
+			std::string coreIdStr = (coreId < 0) ? "N/A" : std::to_string(coreId);
+
+			std::cout << std::left << std::setw(15)
 			<< processName << std::setw(25)
-			<< creationTime << std::setw(5)
-			<< "Core: " << std::setw(8)
-			<< coreId
-			<< currentLine << " / 100\n";
+			<< creationTime << std::setw(8)
+			<< "Core: " << std::setw(5)
+			<< coreIdStr << "Line: "
+			<< currentLine << "/" << getLineCount() << "\n";
+		}
+
+		void executeNextInstruction(int coreId) {
+			if (currentLine < instructions.size() && instructions[currentLine]) {
+				instructions[currentLine]->execute(coreId);
+				currentLine++;
+		}
 	}
 };
