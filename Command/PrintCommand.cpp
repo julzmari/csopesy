@@ -18,6 +18,6 @@ void PrintCommand::execute(int coreId) {
     std::time_t timestamp = std::chrono::system_clock::to_time_t(now);
 
     outFile << "[Core " << coreId << "] "
-        << std::ctime(&timestamp) << ": "
+        << std::put_time(std::localtime(&timestamp), "(%m/%d/%Y %H:%M:%S)") << ": "
         << toPrint << "\n";
 }
