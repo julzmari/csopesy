@@ -2,6 +2,9 @@
 #include <string>
 #include <regex>
 #include <cstdlib>
+#include <thread>
+#include <atomic>
+#include <chrono>
 #include "process_list.h"
 #include "console.h"
 #include "Scheduler.h"
@@ -14,6 +17,8 @@ using std::regex;
 using std::smatch;
 using std::string;
 
+std::atomic<bool> schedulerRunning(false);
+
 ProcessList processes;
 
 void clearScreen()
@@ -23,6 +28,34 @@ void clearScreen()
 #else
     system("clear");
 #endif
+}
+
+void schedulerStart(Config& config, Scheduler& scheduler) {
+    schedulerRunning = true;
+    int batchProcessFreq = config.getBatchProcessFreq();
+    int processId = 1;
+
+    std::thread([&]() {
+        while (schedulerRunning) {
+            
+            std::vector<std::string> instructions;
+            for (int j = 1; j <= 100; ++j) {
+                instructions.push_back("Print command " + std::to_string(j));
+            }
+
+            std::string procName = "Process" + std::to_string(processId++);
+            processes.addNewProcess(-1, 0, procName, instructions);
+            int pid = processes.findProcessByName(procName);
+            scheduler.addProcess(processes.findProcess(pid));
+
+            // Wait for the next batch-process-freq
+            std::this_thread::sleep_for(std::chrono::milliseconds(batchProcessFreq * 1000));
+        }
+        }).detach();
+}
+
+void schedulerStop() {
+    schedulerRunning = false;
 }
 
 void trimSpaces(string &str)
@@ -98,25 +131,11 @@ void startEmulator(Config& config)
     smatch match;
     Scheduler scheduler(processes, config.getNumCPU());
 
-    // PRINT COMMMANDS
-    for (int i = 1; i <= 10; ++i)
-    {
-        std::vector<std::string> instructions;
-        for (int j = 1; j <= 100; ++j)
-        {
-            instructions.push_back("Print command " + std::to_string(j));
-        }
-
-        processes.addNewProcess(-1, 0, "Process" + std::to_string(i), instructions);
-        int pid = processes.findProcessByName("Process" + std::to_string(i));
-        scheduler.addProcess(processes.findProcess(pid));
-    }
-
     scheduler.start();
 
     clearScreen();
     printHeader();
-
+    
     while (true)
     {
         cout << "\nEnter command: ";
@@ -125,15 +144,7 @@ void startEmulator(Config& config)
         // Trim leading and trailing spaces
         trimSpaces(command);
 
-        if (command == "initialize" ||
-            command == "screen" ||
-            command == "scheduler-test" ||
-            command == "scheduler-stop" ||
-            command == "report-util")
-        {
-            cout << command << " command recognized. Doing something." << endl;
-        }
-        else if (command == "screen -ls")
+        if (command == "screen -ls")
         {
             listScreens();
         }
@@ -170,8 +181,16 @@ void startEmulator(Config& config)
                 cout << "Please provide a screen name. Usage: screen -s <name> or screen -r <name>" << endl;
             }
         }
-        else if (command == "screen --help")
+        else if (command == "scheduler-start")
         {
+            if (!schedulerRunning.load())
+            {
+				schedulerStart(config, scheduler);
+            }
+		}
+        else if (command == "scheduler-stop")
+        {
+			schedulerStop();
         }
         else
         {
