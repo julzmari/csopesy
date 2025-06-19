@@ -10,7 +10,7 @@ int main() {
     Config config("Config/config.txt");
 
     while (true) {
-        cout << "Enter command: ";
+        cout << "root:/> ";
         getline(cin, command);
 
         // Trim leading and trailing spaces
@@ -23,9 +23,6 @@ int main() {
         else if (command == "exit") {
             cout << "exit command recognized. Exiting program." << endl;
             break;
-        }
-        else {
-            cout << "Unknown command. Please try again." << endl;
         }
     }
 
