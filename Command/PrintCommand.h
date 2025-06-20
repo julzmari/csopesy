@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ICommand.h"
+#include "Command.h"
 #include <string>
 
-class PrintCommand : public ICommand {
+class PrintCommand : public Command {
     public:
-        PrintCommand(int pid, const std::string& printText);
-        void execute(int coreId) override;
+        explicit PrintCommand(uint16_t value);
+		PrintCommand();
+        void execute(process& context) override;
 
     private:
-        int processId;
         std::string toPrint;
 };

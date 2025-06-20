@@ -8,6 +8,7 @@
 #include <chrono>
 #include <sstream>
 #include <memory>
+#include <unordered_map>
 #include "PrintCommand.h"
 
 enum class ProcessState
@@ -40,8 +41,11 @@ private:
 	std::vector<std::shared_ptr<PrintCommand>> instructions;
 	int currentLine = 0;
 	std::string creationTime;
+	std::vector<std::stringstream> logs; //for print command
+	
 
 public:
+	std::unordered_map<std::string, uint16_t> variables;
 	// Constructor
 	process(int pid, int coreId, int priority, const std::string &processName, const std::vector<std::shared_ptr<PrintCommand>> &instructions)
 		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions)
@@ -56,27 +60,36 @@ public:
 		state = ProcessState::NEW;
 	}
 
+	// methods
+	void addLog(const std::stringstream &log)
+	{
+		logs.push_back(log);
+	}
+	void printLogs() const
+	{
+		for (const auto &log : logs)
+		{
+			std::cout << log.str();
+		}
+	}
+
 	// Getters and setters
 	int getPid() const
 	{
 		return pid;
 	}
-
 	int getPriority() const
 	{
 		return priority;
 	}
-
 	const std::string &getProcessName() const
 	{
 		return processName;
 	}
-
 	void setState(ProcessState newState)
 	{
 		state = newState;
 	}
-
 	ProcessState getState() const
 	{
 		return state;

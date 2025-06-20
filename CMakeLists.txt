@@ -23,11 +23,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
 # Add source to this project's executable.
 add_executable (CSOPESY_MCO 
 				"CSOPESY_MCO.cpp" "OsEmulator.h" "Config/Config.h" "Config/Config.cpp"  
-				"Command/ICommand.h" "Command/PrintCommand.h" "Command/PrintCommand.cpp"
+				"Command/PrintCommand.h" "Command/PrintCommand.cpp"
 				"Screen/console.h" "Screen/console.cpp"
 				"Process/myProcess.h" "Process/process_list.h" "Process/process_list.cpp"
 				"Scheduler/Scheduler.h" "Scheduler/Scheduler.cpp"
-				)
+				"Command/Command.h"    "Command/DeclareCommand.cpp" "Command/DeclareCommand.h" 
+				"Command/AddCommand.cpp" "Command/AddCommand.h" "Command/SubtractCommand.cpp" "Command/SubtractCommand.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CSOPESY_MCO PROPERTY CXX_STANDARD 20)
