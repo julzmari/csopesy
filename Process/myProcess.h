@@ -42,6 +42,8 @@ private:
 	int currentLine = 0;
 	std::string creationTime;
 	std::vector<std::stringstream> logs; //for print command
+	bool isSleeping = false;
+	uint8_t sleepTime = 0; // in milliseconds for sleep state
 	
 
 public:
@@ -74,6 +76,18 @@ public:
 	}
 
 	// Getters and setters
+	void setSleeping(bool sleeping)
+	{
+		isSleeping = sleeping;
+	}
+	uint8_t getSleepTime() const
+	{
+		return sleepTime;
+	}
+	void setSleepTime(uint8_t time)
+	{
+		sleepTime = time;
+	}
 	int getPid() const
 	{
 		return pid;

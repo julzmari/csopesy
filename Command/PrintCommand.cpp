@@ -3,6 +3,7 @@
 #include <chrono>
 #include <ctime>
 #include <sstream>
+#include <myProcess.h>
 
 PrintCommand::PrintCommand(uint16_t value) {
     toPrint = std::to_string(value);

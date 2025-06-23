@@ -7,7 +7,7 @@ class PrintCommand : public Command {
     public:
         explicit PrintCommand(uint16_t value);
 		PrintCommand();
-        void execute(process& context) override;
+        void execute(process& context);
 
     private:
         std::string toPrint;

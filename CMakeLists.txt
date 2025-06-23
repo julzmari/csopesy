@@ -28,7 +28,7 @@ add_executable (CSOPESY_MCO
 				"Process/myProcess.h" "Process/process_list.h" "Process/process_list.cpp"
 				"Scheduler/Scheduler.h" "Scheduler/Scheduler.cpp"
 				"Command/Command.h"    "Command/DeclareCommand.cpp" "Command/DeclareCommand.h" 
-				"Command/AddCommand.cpp" "Command/AddCommand.h" "Command/SubtractCommand.cpp" "Command/SubtractCommand.h")
+				"Command/AddCommand.cpp" "Command/AddCommand.h" "Command/SubtractCommand.cpp" "Command/SubtractCommand.h" "Command/SleepCommand.h" "Command/SleepCommand.cpp" "Command/ForCommand.cpp" "Command/ForCommand.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CSOPESY_MCO PROPERTY CXX_STANDARD 20)
