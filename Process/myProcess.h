@@ -38,7 +38,7 @@ private:
 	int priority;
 	ProcessState state;
 	std::string processName;
-	std::vector<std::shared_ptr<PrintCommand>> instructions;
+	std::vector<std::shared_ptr<Command>> instructions;
 	int currentLine = 0;
 	std::string creationTime;
 	std::vector<std::stringstream> logs; //for print command
@@ -151,7 +151,7 @@ public:
 		return creationTime;
 	}
 
-	void addInstruction(const std::shared_ptr<PrintCommand> &command)
+	void addInstruction(const std::shared_ptr<Command> &command)
 	{
 		instructions.push_back(command);
 	}
@@ -161,6 +161,7 @@ public:
 		return currentLine >= instructions.size();
 	}
 
+	// util functions
 	void printProcessInfo() const
 	{
 		std::string coreIdStr = (coreId < 0) ? "N/A" : std::to_string(coreId);
@@ -182,7 +183,6 @@ public:
 				<< currentLine << "/" << getLineCount() << "\n";
 		}
 	}
-
 	void executeNextInstruction(int coreId)
 	{
 		if (currentLine < instructions.size() && instructions[currentLine])
@@ -190,5 +190,8 @@ public:
 			instructions[currentLine]->execute(coreId);
 			currentLine++;
 		}
+	}
+	void insertInstructions(int pos, const std::vector<std::shared_ptr<Command>>& cmds) {
+		instructions.insert(instructions.begin() + pos, cmds.begin(), cmds.end());
 	}
 };

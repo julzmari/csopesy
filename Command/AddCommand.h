@@ -12,6 +12,9 @@ public:
 	AddCommand(const std::string& var1, uint16_t value1, uint16_t value2); // both are value
 
 	void execute(process& context) override;
+	std::shared_ptr<Command> clone() const override {
+		return std::make_shared<AddCommand>(*this);
+	}
 
 private:
 	std::string targetVar;
