@@ -67,7 +67,7 @@ void ProcessList::printAllProcesses()
 
 	std::cout << "\nFinished processes:\n";
 	for (const auto& [pid, proc] : processMap) {
-		if (proc.getState() == ProcessState::TERMINATED) {
+		if (proc.getState() == ProcessState::FINISHED) {
 			proc.printProcessInfo();
 		}
 	}
