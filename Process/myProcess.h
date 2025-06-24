@@ -13,11 +13,10 @@
 
 enum class ProcessState
 {
-	NEW,
 	READY,
 	RUNNING,
 	WAITING,
-	TERMINATED
+	FINISHED
 };
 
 inline std::string getCurrentTimeString()
@@ -53,13 +52,13 @@ public:
 		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions)
 	{
 		creationTime = getCurrentTimeString();
-		state = ProcessState::NEW;
+		state = ProcessState::READY;
 	}
 
 	process() : pid(0), coreId(-1), priority(0), processName("")
 	{
 		creationTime = getCurrentTimeString();
-		state = ProcessState::NEW;
+		state = ProcessState::READY;
 	}
 
 	// methods
@@ -159,7 +158,7 @@ public:
 	{
 		std::string coreIdStr = (coreId < 0) ? "N/A" : std::to_string(coreId);
 
-		if (state == ProcessState::TERMINATED)
+		if (state == ProcessState::FINISHED)
 		{
 			std::cout << std::left << std::setw(15)
 				<< processName << std::setw(25)
