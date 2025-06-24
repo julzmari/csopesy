@@ -11,7 +11,7 @@ private:
 
 public:
     process findProcess(int pid);
-    void addNewProcess(int coreId, int priority, const std::string &processName, const std::vector<std::string> &instructions);
+    void addNewProcess(int coreId, int priority, const std::string &processName);
     void updateProcess(const process &proc);
     void printAllProcesses();
     int findProcessByName(const std::string &processName);

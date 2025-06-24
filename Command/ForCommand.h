@@ -10,6 +10,4 @@ public:
 public:
 	std::vector<std::shared_ptr<Command>> instructions;
 	int repeats;
-	int currentRepeat = 0;
-	size_t currentInstruction = 0;
 };

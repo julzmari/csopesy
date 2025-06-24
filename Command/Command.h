@@ -1,4 +1,8 @@
 #pragma once  
+#include <memory>
+
+class process;
+
 class Command {  
 public:  
     virtual void execute(process& context) = 0;  

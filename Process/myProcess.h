@@ -9,7 +9,7 @@
 #include <sstream>
 #include <memory>
 #include <unordered_map>
-#include "PrintCommand.h"
+#include "Command.h"
 
 enum class ProcessState
 {
@@ -41,7 +41,7 @@ private:
 	std::vector<std::shared_ptr<Command>> instructions;
 	int currentLine = 0;
 	std::string creationTime;
-	std::vector<std::stringstream> logs; //for print command
+	std::vector<std::string> logs; //for print command
 	bool isSleeping = false;
 	uint8_t sleepTime = 0; // in milliseconds for sleep state
 	
@@ -49,7 +49,7 @@ private:
 public:
 	std::unordered_map<std::string, uint16_t> variables;
 	// Constructor
-	process(int pid, int coreId, int priority, const std::string &processName, const std::vector<std::shared_ptr<PrintCommand>> &instructions)
+	process(int pid, int coreId, int priority, const std::string &processName, const std::vector<std::shared_ptr<Command>> &instructions)
 		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions)
 	{
 		creationTime = getCurrentTimeString();
@@ -65,13 +65,13 @@ public:
 	// methods
 	void addLog(const std::stringstream &log)
 	{
-		logs.push_back(log);
+		logs.emplace_back(log.str());
 	}
 	void printLogs() const
 	{
 		for (const auto &log : logs)
 		{
-			std::cout << log.str();
+			std::cout << log;
 		}
 	}
 
@@ -114,7 +114,7 @@ public:
 		priority = newPriority;
 	}
 
-	const std::vector<std::shared_ptr<PrintCommand>> &getInstructions() const
+	const std::vector<std::shared_ptr<Command>> &getInstructions() const
 	{
 		return instructions;
 	}
@@ -137,13 +137,6 @@ public:
 	void setCurrentLine(int line)
 	{
 		currentLine = line;
-	}
-
-	std::shared_ptr<PrintCommand> getCurrentInstruction() const
-	{
-		if (currentLine < instructions.size())
-			return instructions[currentLine];
-		return nullptr;
 	}
 
 	std::string getCreationTime() const
@@ -183,13 +176,11 @@ public:
 				<< currentLine << "/" << getLineCount() << "\n";
 		}
 	}
-	void executeNextInstruction(int coreId)
+	std::shared_ptr<Command> getCurrentInstruction() const
 	{
-		if (currentLine < instructions.size() && instructions[currentLine])
-		{
-			instructions[currentLine]->execute(coreId);
-			currentLine++;
-		}
+		if (currentLine < instructions.size())
+			return instructions[currentLine];
+		return nullptr;
 	}
 	void insertInstructions(int pos, const std::vector<std::shared_ptr<Command>>& cmds) {
 		instructions.insert(instructions.begin() + pos, cmds.begin(), cmds.end());

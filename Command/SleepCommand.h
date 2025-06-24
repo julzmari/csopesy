@@ -5,7 +5,7 @@
 
 class SleepCommand : public Command {
 public:
-	virtual void execute(process& context) const;
+	virtual void execute(process& context);
 	SleepCommand(uint8_t sleepTime);
 
 	std::shared_ptr<Command> clone() const override {

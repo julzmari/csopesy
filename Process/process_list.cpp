@@ -31,15 +31,12 @@ int ProcessList::findProcessByName(const std::string &processName)
 	}
 }
 
-void ProcessList::addNewProcess(int coreId, int priority, const std::string &processName, const std::vector<std::string> &instructions)
+void ProcessList::addNewProcess(int coreId, int priority, const std::string &processName)
 {
 	int newPid = ++lastPid;
-	std::vector<std::shared_ptr<PrintCommand>> printCommands;
-	for (const auto &instr : instructions)
-	{
-		printCommands.push_back(std::make_shared<PrintCommand>(newPid, instr));
-	}
-	process newProc(newPid, coreId, priority, processName, printCommands);
+	std::vector<std::shared_ptr<Command>> emptyCommand;
+	
+	process newProc(newPid, coreId, priority, processName, emptyCommand);
 	processMap[newPid] = newProc;
 	nameToPidMap[processName] = newPid;
 }

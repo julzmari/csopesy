@@ -65,7 +65,7 @@ void createOrResumeScreen(const string &cmd, const string &name)
         else
         {
             std::vector<std::string> instructions;
-            processes.addNewProcess(-1, 0, name, instructions);
+            processes.addNewProcess(-1, 0, name);
             processes.printAllProcesses();
         }
     }
@@ -107,7 +107,7 @@ void startEmulator(Config& config)
             instructions.push_back("Print command " + std::to_string(j));
         }
 
-        processes.addNewProcess(-1, 0, "Process" + std::to_string(i), instructions);
+        processes.addNewProcess(-1, 0, "Process" + std::to_string(i));
         int pid = processes.findProcessByName("Process" + std::to_string(i));
         scheduler.addProcess(processes.findProcess(pid));
     }

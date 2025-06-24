@@ -63,9 +63,12 @@ void Scheduler::workerThreadFunc(int coreId)
         }
         for (int i = 0; i < proc.getLineCount(); ++i)
         {
-            proc.executeNextInstruction(coreId);
-            //proc.setCurrentLine(i + 1);
-			processList.updateProcess(proc);
+            auto instruction = proc.getCurrentInstruction();
+            if (instruction) {
+                instruction->execute(proc);
+            }
+            //proc.setCurrentLine(i + 1); // Move to the next instruction
+            processList.updateProcess(proc);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
