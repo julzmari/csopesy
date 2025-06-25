@@ -8,14 +8,17 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include "config.h"
 
 class Scheduler
 {
 public:
-    Scheduler(ProcessList &plist, int numCores);
+    Scheduler(ProcessList &plist, Config &config);
     void start();
     void stop();
     void addProcess(const process &proc);
+	void startBatchGeneration();
+	void stopBatchGeneration();
 
 private:
     void schedulerThreadFunc();
@@ -29,4 +32,9 @@ private:
     std::mutex queueMutex;
     std::condition_variable cv;
     std::atomic<bool> running;
+    std::atomic<bool> batchGenerating = false;
+    std::thread batchGeneratorThread;
+    int batchFreq;
+    int minIns, maxIns;
+    int delaysPerExec;
 };

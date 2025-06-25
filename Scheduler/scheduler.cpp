@@ -3,9 +3,14 @@
 #include <thread>
 #include "Scheduler.h"
 #include "PrintCommand.h"
+#include "config.h"
 
-Scheduler::Scheduler(ProcessList &plist, int numCores)
-    : processList(plist), numCores(numCores), running(false) {}
+Scheduler::Scheduler(ProcessList &plist, Config& config)
+    : processList(plist), numCores(config.getNumCPU()), running(false),
+    batchFreq(config.getBatchProcessFreq()),
+    minIns(config.getMinIns()), maxIns(config.getMaxIns()),
+    delaysPerExec(config.getDelaysPerExec()) {
+}
 
 void Scheduler::start()
 {
@@ -67,12 +72,48 @@ void Scheduler::workerThreadFunc(int coreId)
             if (instruction) {
                 instruction->execute(proc);
             }
-            //proc.setCurrentLine(i + 1); // Move to the next instruction
+            proc.setCurrentLine(i + 1); // Move to the next instruction
             processList.updateProcess(proc);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
-        proc.setState(ProcessState::TERMINATED);
+        proc.setState(ProcessState::FINISHED);
         processList.updateProcess(proc);
+    }
+}
+
+void Scheduler::startBatchGeneration() {
+    if (batchGenerating) return;
+    batchGenerating = true;
+
+    batchGeneratorThread = std::thread([this]() {
+
+        int processCounter = 0;
+
+        while (batchGenerating) {
+
+            int insCount = minIns + rand() % (maxIns - minIns + 1);
+
+            std::vector<std::shared_ptr<Command>> cmds;
+
+            std::string procName = "Process" + std::to_string(++processCounter);
+            processList.addNewProcess(-1, 0, procName);
+            int pid = processList.findProcessByName(procName);
+            process proc = processList.findProcess(pid);
+
+            for (int i = 0; i < insCount; ++i) {
+                proc.addInstruction(std::make_shared<PrintCommand>("Command " + std::to_string(i + 1), delaysPerExec));
+            }
+
+            addProcess(proc);
+            std::this_thread::sleep_for(std::chrono::milliseconds(batchFreq));
+        }
+        });
+}
+
+void Scheduler::stopBatchGeneration() {
+    batchGenerating = false;
+    if (batchGeneratorThread.joinable()) {
+        batchGeneratorThread.join();
     }
 }

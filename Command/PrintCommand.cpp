@@ -4,12 +4,18 @@
 #include <ctime>
 #include <sstream>
 #include <myProcess.h>
+#include <thread>
 
 PrintCommand::PrintCommand(uint16_t value) {
     toPrint = std::to_string(value);
 }
 
 PrintCommand::PrintCommand() : toPrint("") {
+}
+
+PrintCommand::PrintCommand(const std::string& msg, int delay) {
+    toPrint = msg;
+    delayTime = delay;
 }
 
 void PrintCommand::execute(process& context) {
@@ -32,5 +38,8 @@ void PrintCommand::execute(process& context) {
 
         context.addLog(printCmd);
     }
-    
+
+    if (delayTime > 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(delayTime));
+    }
 }

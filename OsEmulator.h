@@ -96,10 +96,10 @@ void startEmulator(Config& config)
     string command;
     regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
     smatch match;
-    Scheduler scheduler(processes, config.getNumCPU());
+    Scheduler scheduler(processes, config);
 
     // PRINT COMMMANDS
-    for (int i = 1; i <= 10; ++i)
+    /*for (int i = 1; i <= 10; ++i)
     {
         std::vector<std::string> instructions;
         for (int j = 1; j <= 100; ++j)
@@ -110,7 +110,7 @@ void startEmulator(Config& config)
         processes.addNewProcess(-1, 0, "Process" + std::to_string(i));
         int pid = processes.findProcessByName("Process" + std::to_string(i));
         scheduler.addProcess(processes.findProcess(pid));
-    }
+    }*/
 
     scheduler.start();
 
@@ -125,13 +125,12 @@ void startEmulator(Config& config)
         // Trim leading and trailing spaces
         trimSpaces(command);
 
-        if (command == "initialize" ||
-            command == "screen" ||
-            command == "scheduler-test" ||
-            command == "scheduler-stop" ||
-            command == "report-util")
+        if (command == "scheduler-start")
         {
-            cout << command << " command recognized. Doing something." << endl;
+            scheduler.startBatchGeneration();
+        }
+        else if (command == "scheduler-stop") {
+            scheduler.stopBatchGeneration();
         }
         else if (command == "screen -ls")
         {
