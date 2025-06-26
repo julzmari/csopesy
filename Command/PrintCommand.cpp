@@ -13,9 +13,8 @@ PrintCommand::PrintCommand(uint16_t value) {
 PrintCommand::PrintCommand() : toPrint("") {
 }
 
-PrintCommand::PrintCommand(const std::string& msg, int delay) {
+PrintCommand::PrintCommand(const std::string& msg) {
     toPrint = msg;
-    delayTime = delay;
 }
 
 void PrintCommand::execute(process& context) {
