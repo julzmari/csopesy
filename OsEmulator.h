@@ -6,6 +6,8 @@
 #include "console.h"
 #include "Scheduler.h"
 #include "PrintCommand.h"
+#include <fstream>
+
 
 using std::cin;
 using std::cout;
@@ -91,6 +93,60 @@ void listScreens()
     processes.printAllProcesses();
 }
 
+void generateReport(bool toConsole = true) {
+    int totalCores = 4; 
+    int usedCores = 0;
+
+    std::ostringstream output;
+
+    // Header
+    output << "CPU utilization: ";
+    int runningCount = 0;
+
+    for (const auto& [pid, proc] : processes.getAll()) {
+        if (proc.getState() == ProcessState::RUNNING) runningCount++;
+    }
+
+    usedCores = runningCount;
+    int utilization = (100 * usedCores) / totalCores;
+    output << utilization << "%\n";
+    output << "Cores used: " << usedCores << "\n";
+    output << "Cores available: " << (totalCores - usedCores) << "\n";
+    output << "------------------------------------\n";
+
+    output << "Running processes:\n";
+    for (const auto& [pid, proc] : processes.getAll()) {
+        if (proc.getState() == ProcessState::RUNNING) {
+            output << std::left << std::setw(15)
+                   << proc.getProcessName()
+                   << std::setw(25) << proc.getCreationTime()
+                   << "Core: " << proc.getCoreId()
+                   << " " << proc.getCurrentLine()
+                   << " / " << proc.getLineCount() << "\n";
+        }
+    }
+
+    output << "\nFinished processes:\n";
+    for (const auto& [pid, proc] : processes.getAll()) {
+        if (proc.getState() == ProcessState::FINISHED) {
+            output << std::left << std::setw(15)
+                   << proc.getProcessName()
+                   << std::setw(25) << proc.getCreationTime()
+                   << "Finished "
+                   << proc.getLineCount() << " / " << proc.getLineCount() << "\n";
+        }
+    }
+
+    if (toConsole) {
+        std::cout << output.str();
+    } else {
+        std::ofstream file("csopesy-log.txt");
+        file << output.str();
+        file.close();
+        std::cout << "Report generated at C:/csopesy-log.txt!\n";
+    }
+}
+
 void startEmulator(Config& config)
 {
     string command;
@@ -134,8 +190,12 @@ void startEmulator(Config& config)
         }
         else if (command == "screen -ls")
         {
-            listScreens();
+            //listScreens();
+            generateReport(true); //console
         }
+        else if (command == "report-util") {
+            generateReport(false); //file
+}
         else if (command == "clear")
         {
             clearScreen();
@@ -178,3 +238,5 @@ void startEmulator(Config& config)
         }
     }
 }
+
+

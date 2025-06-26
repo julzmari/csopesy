@@ -1,7 +1,11 @@
+#ifdef _WIN32
 #include <windows.h>
+#endif
+#ifdef _WIN32
 #include <process.h>
+#endif
 #include <thread>
-#include "Scheduler.h"
+#include "scheduler.h"
 #include "PrintCommand.h"
 #include "config.h"
 

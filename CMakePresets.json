@@ -56,6 +56,41 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+       {
+      "name": "macos-debug",
+      "displayName": "macOS Debug",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-release",
+      "displayName": "macOS Release",
+      "inherits": "macos-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
         }
-    ]
+
+
+    ],
+    "buildPresets": [
+  {
+    "name": "macos-debug",
+    "configurePreset": "macos-debug"
+  },
+  {
+    "name": "macos-release",
+    "configurePreset": "macos-release"
+  }
+]
+
 }

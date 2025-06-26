@@ -133,6 +133,10 @@ public:
 		coreId = id;
 	}
 
+	int getCoreId() const {
+    return coreId;
+}
+
 	void setCurrentLine(int line)
 	{
 		currentLine = line;

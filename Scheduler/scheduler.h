@@ -1,5 +1,7 @@
 #pragma once
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include <myProcess.h>
 #include <thread>
 #include "process_list.h"

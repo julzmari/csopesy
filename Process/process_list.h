@@ -16,4 +16,11 @@ public:
     void printAllProcesses();
     int findProcessByName(const std::string &processName);
     bool ifProcessNameExists(const std::string &processName);
+
+    const std::unordered_map<int, process>& getAll() const {
+    return processMap;
+    }
+
 };
+
+
