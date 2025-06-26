@@ -16,3 +16,11 @@ void ForCommand::execute(process& context) {
     context.insertInstructions(insertPos, toInsert);
     context.setCurrentLine(insertPos + toInsert.size());
 }
+
+std::shared_ptr<Command> ForCommand::clone() const {
+    std::vector<std::shared_ptr<Command>> copiedInstructions;
+    for (const auto& cmd : instructions) {
+        copiedInstructions.push_back(cmd->clone());
+    }
+    return std::make_shared<ForCommand>(copiedInstructions, repeats);
+}
