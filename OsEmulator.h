@@ -2,12 +2,16 @@
 #include <string>
 #include <regex>
 #include <cstdlib>
+#include <memory>
+#include <fstream>
+
 #include "process_list.h"
 #include "console.h"
 #include "Scheduler.h"
 #include "PrintCommand.h"
+#include "DeclareCommand.h"
+#include "AddCommand.h"
 #include "Config.h"
-#include <fstream>
 
 using std::cin;
 using std::cout;
@@ -56,7 +60,7 @@ void printHeader()
 }
 
 // Create or resume screen
-void createOrResumeScreen(const string &cmd, const string &name)
+void createOrResumeScreen(const string &cmd, const string &name, Scheduler &scheduler)
 {
     if (cmd == "screen -s")
     { // Create new process
@@ -66,8 +70,36 @@ void createOrResumeScreen(const string &cmd, const string &name)
         }
         else
         {
-            std::vector<std::string> instructions;
+            int insCount = scheduler.getMinIns() + rand() % (scheduler.getMaxIns() - scheduler.getMinIns() + 1);
+
+            std::vector<std::shared_ptr<Command>> cmds;
+            cmds.push_back(std::make_shared<DeclareCommand>("x", 0));
+
+            for (int i = 0; i < insCount; ++i)
+            {
+                if (i % 2 == 0)
+                {
+                    cmds.push_back(std::make_shared<PrintCommand>("Value from: ", "x"));
+                }
+                else
+                {
+                    int addValue = 1 + rand() % 10;
+                    std::string tempVar = "temp" + std::to_string(i);
+                    cmds.push_back(std::make_shared<DeclareCommand>(tempVar, addValue));
+                    cmds.push_back(std::make_shared<AddCommand>("x", "x", tempVar));
+                }
+            }
+
             processes.addNewProcess(-1, 0, name);
+            int pid = processes.findProcessByName(name);
+            process &proc = processes.findProcessByRef(pid);
+            proc.clearInstructions();
+            for (const auto &cmd : cmds)
+            {
+                proc.addInstruction(cmd);
+            }
+
+            scheduler.addProcess(proc);
             processes.printAllProcesses();
         }
     }
@@ -238,7 +270,7 @@ void startEmulator(Config &config)
             }
             else if (!name.empty())
             {
-                createOrResumeScreen(prefix, name);
+                createOrResumeScreen(prefix, name, scheduler);
             }
             else
             {

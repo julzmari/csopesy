@@ -80,6 +80,11 @@ public:
 		return logs;
 	}
 
+	uint16_t getVar(const std::string &name) const
+	{
+		return variables.at(name);
+	}
+
 	void setSleeping(bool sleeping)
 	{
 		isSleeping = sleeping;
@@ -131,17 +136,21 @@ public:
 	int getLineCount() const
 	{
 		int count = 0;
-		for (const auto& cmd : instructions) {
+		for (const auto &cmd : instructions)
+		{
 			count += getCommandLineCount(cmd);
 		}
 		return count;
 	}
 
-	int getCommandLineCount(const std::shared_ptr<Command>& cmd) const {
+	int getCommandLineCount(const std::shared_ptr<Command> &cmd) const
+	{
 		auto forCmd = std::dynamic_pointer_cast<ForCommand>(cmd);
-		if (forCmd) {
+		if (forCmd)
+		{
 			int bodyCount = 0;
-			for (const auto& inner : forCmd->instructions) {
+			for (const auto &inner : forCmd->instructions)
+			{
 				bodyCount += getCommandLineCount(inner);
 			}
 			return bodyCount * forCmd->repeats;

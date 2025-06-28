@@ -21,6 +21,8 @@ public:
     void addProcess(const process &proc);
     void startBatchGeneration();
     void stopBatchGeneration();
+    int getMinIns() const { return minIns; }
+    int getMaxIns() const { return maxIns; }
 
 private:
     int batchFreq;

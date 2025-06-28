@@ -234,6 +234,25 @@ void Scheduler::startBatchGeneration()
                 cmds.push_back(generateForBlock(1, procName)); // Start at depth = 1
             }
 
+            // // --------------------  #4 Scenario ------------------------------//
+            // cmds.push_back(std::make_shared<DeclareCommand>("x", 0));
+
+            // for (int i = 0; i < insCount; ++i)
+            // {
+            //     if (i % 2 == 0)
+            //     {
+            //         cmds.push_back(std::make_shared<PrintCommand>("Value from: ", "x"));
+            //     }
+            //     else
+            //     {
+            //         int addValue = 1 + rand() % 10;
+            //         std::string tempVar = "temp" + std::to_string(i);
+            //         cmds.push_back(std::make_shared<DeclareCommand>(tempVar, addValue));
+            //         cmds.push_back(std::make_shared<AddCommand>("x", "x", tempVar));
+            //     }
+            // }
+            // // -------------------------------------------------------------- //
+
             proc.clearInstructions();
             for (const auto &cmd : cmds)
             {
