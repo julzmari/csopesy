@@ -58,6 +58,24 @@ void Scheduler::schedulerThreadFunc()
     }
 }
 
+std::shared_ptr<Command> Scheduler::generateForBlock(int currentDepth, const std::string &procName)
+{
+    std::vector<std::shared_ptr<Command>> nestedInstructions;
+    int repeatCount = 1 + rand() % 3; // 1 to 3 iterations
+
+    nestedInstructions.push_back(std::make_shared<PrintCommand>());
+
+    if (currentDepth < 3)
+    {
+        if (rand() % 2 == 0)
+        {
+            nestedInstructions.push_back(generateForBlock(currentDepth + 1, procName));
+        }
+    }
+
+    return std::make_shared<ForCommand>(nestedInstructions, repeatCount);
+}
+
 void Scheduler::workerThreadFunc(int coreId)
 {
     while (running)
@@ -196,12 +214,9 @@ void Scheduler::startBatchGeneration()
             }
 
             //FOR
-            for (int i = 0; i < numFor; ++i) {
-                int repeats = 1 + rand() % 5;  // Random repeats for loop
-                std::vector<std::shared_ptr<Command>> loopInstructions = {
-                    std::make_shared<PrintCommand>()
-                };
-                cmds.push_back(std::make_shared<ForCommand>(loopInstructions, repeats));
+            for (int i = 0; i < numFor; ++i)
+            {
+                cmds.push_back(generateForBlock(1, procName)); // Start at depth = 1
             }
 
             proc.clearInstructions();

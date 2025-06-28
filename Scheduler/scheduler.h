@@ -43,4 +43,5 @@ private:
     std::atomic<bool> running;
     std::atomic<bool> batchGenerating = false;
     std::thread batchGeneratorThread;
+    std::shared_ptr<Command> generateForBlock(int currentDepth, const std::string &procName);
 };

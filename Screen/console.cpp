@@ -1,5 +1,6 @@
 #include "console.h"
 #include "myProcess.h"
+#include "process_list.h"
 #include <fstream>
 #include <string>
 
@@ -9,9 +10,7 @@ class process;
 #include <windows.h>
 #endif
 
-console::console() : proc(), totalLines(100) {}
-
-console::console(const process &proc) : proc(proc), totalLines(100) {}
+console::console(ProcessList &plist, const process &proc) : processList(plist), proc(proc), totalLines(100) {}
 
 // Simulate inside-screen interaction
 void console::handleScreen()
@@ -44,14 +43,16 @@ void console::handleScreen()
         }
         else if (input == "process-smi")
         {
+            process latestProc = processList.findProcess(proc.getPid());
             std::cout
-                << "Process: " << proc.getProcessName() << "\n"
-                << "ID: " << proc.getPid() << "\n"
-                << "Current instruction line: " << proc.getCurrentLine() << "\n"
-                << "Lines of code: " << proc.getLineCount() << "\n"
-                << "Created at: " << proc.getCreationTime() << "\n";
+                << "Process: " << latestProc.getProcessName() << "\n"
+                << "ID: " << latestProc.getPid() << "\n"
+                << "Current instruction line: " << latestProc.getCurrentLine() << "\n"
+                << "Lines of code: " << latestProc.getLineCount() << "\n"
+                << "Created at: " << latestProc.getCreationTime() << "\n";
 
-            const auto &logs = proc.getLogs();
+            const auto &logs = latestProc.getLogs();
+
             if (!logs.empty())
             {
                 std::cout << "\n--- Print Logs ---\n";
@@ -60,12 +61,13 @@ void console::handleScreen()
                     std::cout << entry;
                 }
             }
+
             else
             {
                 std::cout << "\nNo print logs found.\n";
             }
 
-            if (proc.getState() == ProcessState::FINISHED)
+            if (latestProc.getState() == ProcessState::FINISHED)
             {
                 std::cout << "\nFinished!" << std::endl;
             }

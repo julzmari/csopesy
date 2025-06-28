@@ -2,15 +2,16 @@
 #include <string>
 #include "myProcess.h"
 
-class console {
-    private:
-		process proc;
-        int totalLines = 100;
+class ProcessList;
 
-    public:
-        console();
+class console
+{
+private:
+    ProcessList &processList;
+    process proc;
+    int totalLines = 100;
 
-        console(const process& proc);
-
-        void handleScreen();
+public:
+    console(ProcessList &plist, const process &proc);
+    void handleScreen();
 };

@@ -77,7 +77,7 @@ void createOrResumeScreen(const string &cmd, const string &name)
         {
             int pid = processes.findProcessByName(name);
             process curr_proc = processes.findProcess(pid);
-            console proc_console(curr_proc);
+            console proc_console(processes, curr_proc);
             proc_console.handleScreen();
             printHeader();
         }
