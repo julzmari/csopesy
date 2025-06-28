@@ -10,6 +10,7 @@
 #include <memory>
 #include <unordered_map>
 #include "Command.h"
+#include "ForCommand.h"
 
 enum class ProcessState
 {
@@ -120,7 +121,23 @@ public:
 
 	int getLineCount() const
 	{
-		return static_cast<int>(instructions.size());
+		int count = 0;
+		for (const auto& cmd : instructions) {
+			count += getCommandLineCount(cmd);
+		}
+		return count;
+	}
+
+	int getCommandLineCount(const std::shared_ptr<Command>& cmd) const {
+		auto forCmd = std::dynamic_pointer_cast<ForCommand>(cmd);
+		if (forCmd) {
+			int bodyCount = 0;
+			for (const auto& inner : forCmd->instructions) {
+				bodyCount += getCommandLineCount(inner);
+			}
+			return bodyCount * forCmd->repeats;
+		}
+		return 1;
 	}
 
 	int getCurrentLine() const

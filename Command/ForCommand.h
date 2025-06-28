@@ -11,4 +11,6 @@ public:
 public:
 	std::vector<std::shared_ptr<Command>> instructions;
 	int repeats;
+	int currentIteration = 0;
+	int loopPosition = -1;
 };

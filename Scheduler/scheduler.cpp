@@ -160,7 +160,7 @@ void Scheduler::startBatchGeneration() {
                 cmds.push_back(std::make_shared<SleepCommand>(sleepTime));
             }
 
-            // FOR
+            //FOR
             for (int i = 0; i < numFor; ++i) {
                 int repeats = 1 + rand() % 5;  // Random repeats for loop
                 std::vector<std::shared_ptr<Command>> loopInstructions = {

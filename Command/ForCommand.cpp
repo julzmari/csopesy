@@ -6,15 +6,23 @@ ForCommand::ForCommand(const std::vector<std::shared_ptr<Command>>& instructions
 }
 
 void ForCommand::execute(process& context) {
-    int insertPos = context.getCurrentLine();
-    std::vector<std::shared_ptr<Command>> toInsert;
-    for (int i = 0; i < repeats; ++i) {
-        for (const auto& cmd : instructions) {
-            toInsert.push_back(cmd->clone());
-        }
+    if (loopPosition == -1) {
+        loopPosition = context.getCurrentLine();
+        currentIteration = 0;
     }
-    context.insertInstructions(insertPos, toInsert);
-    context.setCurrentLine(insertPos + toInsert.size());
+
+    if (currentIteration < repeats) {
+        for (const auto& cmd : instructions) {
+            cmd->execute(context);
+        }
+        ++currentIteration;
+        context.setCurrentLine(loopPosition);
+    }
+    else {
+        loopPosition = -1;
+        currentIteration = 0;
+        context.setCurrentLine(loopPosition + 1);
+    }
 }
 
 std::shared_ptr<Command> ForCommand::clone() const {
