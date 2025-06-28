@@ -165,19 +165,34 @@ void Scheduler::startBatchGeneration()
             int pid = processList.findProcessByName(procName);
             process &proc = processList.findProcessByRef(pid);
 
-            int baseCount = insCount / 6;
-            int remaining = insCount - baseCount * 6;
+            std::unordered_map<std::string, int> instrCount = {
+                {"DECLARE", 0},
+                {"ADD", 0},
+                {"SUBTRACT", 0},
+                {"PRINT", 0},
+                {"SLEEP", 0},
+                {"FOR", 0}
+            };
 
-            int numDeclare = (baseCount > 0) ? baseCount : 1;
-            int numAdd = (baseCount > 0) ? baseCount : 1;
-            int numSubtract = (baseCount > 0) ? baseCount : 1;
-            int numPrint = (baseCount > 0) ? baseCount : 1;
-            int numSleep = (baseCount > 0) ? baseCount : 1;
-            int numFor = (remaining > 0) ? remaining : 0; 
+            std::vector<std::string> instrTypes = {
+                "DECLARE", "ADD", "SUBTRACT", "PRINT", "SLEEP", "FOR"
+            };
 
-            if (remaining > 0) {
-                numFor = remaining;
+            int remaining = insCount;
+            int typeIndex = 0;
+
+            while (remaining > 0) {
+                instrCount[instrTypes[typeIndex]]++;
+                remaining--;
+                typeIndex = (typeIndex + 1) % instrTypes.size();
             }
+
+            int numDeclare = instrCount["DECLARE"];
+            int numAdd = instrCount["ADD"];
+            int numSubtract = instrCount["SUBTRACT"];
+            int numPrint = instrCount["PRINT"];
+            int numSleep = instrCount["SLEEP"];
+            int numFor = instrCount["FOR"];
 
             // DECLARE
             for (int i = 0; i < numDeclare; ++i) {
