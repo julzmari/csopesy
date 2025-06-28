@@ -1,3 +1,7 @@
 .vscode/
 out/
 .vs/
+build/
+*.exe
+*.pdb
+*.ilk
