@@ -1,11 +1,4 @@
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#ifdef _WIN32
-#include <process.h>
-#endif
 #include <thread>
-#include <algorithm>
 #include "scheduler.h"
 #include "PrintCommand.h"
 #include "AddCommand.h"
@@ -14,14 +7,20 @@
 #include "SleepCommand.h"
 #include "ForCommand.h"
 #include "config.h"
+#include <iostream>
+using namespace std;
 
-#define NOMINMAX
-
-Scheduler::Scheduler(ProcessList &plist, Config& config)
-    : processList(plist), numCores(config.getNumCPU()), running(false),
-    batchFreq(config.getBatchProcessFreq()),
-    minIns(config.getMinIns()), maxIns(config.getMaxIns()),
-    delaysPerExec(config.getDelaysPerExec()) {
+Scheduler::Scheduler(ProcessList &plist, Config &config)
+    : processList(plist),
+      numCores(config.getNumCPU()),
+      running(false),
+      batchFreq(config.getBatchProcessFreq()),
+      minIns(config.getMinIns()),
+      maxIns(config.getMaxIns()),
+      delaysPerExec(config.getDelaysPerExec()),
+      schedulerType(config.getSchedulerAlgorithm()),
+      quantum(config.getQuantumCycles())
+{
 }
 
 void Scheduler::start()
@@ -45,10 +44,8 @@ void Scheduler::stop()
 
 void Scheduler::addProcess(const process &proc)
 {
-    process procCopy = proc;
-    procCopy.setState(ProcessState::READY);
     std::lock_guard<std::mutex> lock(queueMutex);
-    readyQueue.push(procCopy);
+    readyQueue.push(proc.getPid());
     cv.notify_one();
 }
 
@@ -65,42 +62,80 @@ void Scheduler::workerThreadFunc(int coreId)
 {
     while (running)
     {
-        process proc;
+        int pid;
         {
             std::unique_lock<std::mutex> lock(queueMutex);
             cv.wait(lock, [this]
                     { return !readyQueue.empty() || !running; });
             if (!running)
                 break;
-            proc = readyQueue.front();
+            pid = readyQueue.front();
             readyQueue.pop();
-            proc.setState(ProcessState::RUNNING);
-            proc.setCoreId(coreId);
-            processList.updateProcess(proc);
-        }
-        for (int i = 0; i < proc.getLineCount(); ++i)
-        {
-            auto instruction = proc.getCurrentInstruction();
-            if (instruction) {
-                instruction->execute(proc);
-            }
-            proc.setCurrentLine(i + 1); // Move to the next instruction
-            processList.updateProcess(proc);
-            std::this_thread::sleep_for(std::chrono::milliseconds(delaysPerExec));
         }
 
-        proc.setState(ProcessState::FINISHED);
+        process &proc = processList.findProcessByRef(pid);
+        proc.setState(ProcessState::RUNNING);
+        proc.setCoreId(coreId);
         processList.updateProcess(proc);
+
+        // FCFS Implementation
+        if (schedulerType == SchedulerAlgorithm::FCFS)
+        {
+            for (int i = proc.getCurrentLine(); i < proc.getLineCount(); ++i)
+            {
+                auto instruction = proc.getCurrentInstruction();
+                if (instruction)
+                {
+                    instruction->execute(proc);
+                }
+                proc.setCurrentLine(i + 1);
+                processList.updateProcess(proc);
+                std::this_thread::sleep_for(std::chrono::milliseconds(delaysPerExec));
+            }
+            proc.setState(ProcessState::FINISHED);
+            processList.updateProcess(proc);
+        }
+
+        // Round Robin Implementation
+        else if (schedulerType == SchedulerAlgorithm::RR)
+        {
+            int linesRun = 0;
+            for (; linesRun < quantum && proc.getCurrentLine() < proc.getLineCount(); ++linesRun)
+            {
+                auto instruction = proc.getCurrentInstruction();
+                if (instruction)
+                {
+                    instruction->execute(proc);
+                }
+                proc.setCurrentLine(proc.getCurrentLine() + 1);
+                processList.updateProcess(proc);
+                std::this_thread::sleep_for(std::chrono::milliseconds(delaysPerExec));
+            }
+            if (proc.getCurrentLine() >= proc.getLineCount())
+            {
+                proc.setState(ProcessState::FINISHED);
+                processList.updateProcess(proc);
+            }
+            else
+            {
+                proc.setState(ProcessState::READY);
+                processList.updateProcess(proc);
+                std::lock_guard<std::mutex> lock(queueMutex);
+                readyQueue.push(proc.getPid());
+                cv.notify_one();
+            }
+        }
     }
 }
 
-void Scheduler::startBatchGeneration() {
-    if (batchGenerating) return;
+void Scheduler::startBatchGeneration()
+{
+    if (batchGenerating)
+        return;
     batchGenerating = true;
 
-    batchGeneratorThread = std::thread([this]() {
-
-        int processCounter = 0;
+    batchGeneratorThread = std::thread([this]()
+                                       {
 
         while (batchGenerating) {
             int insCount = minIns + rand() % (maxIns - minIns + 1); 
@@ -110,7 +145,7 @@ void Scheduler::startBatchGeneration() {
             std::string procName = "Process" + std::to_string(++processCounter);
             processList.addNewProcess(-1, 0, procName);
             int pid = processList.findProcessByName(procName);
-            process proc = processList.findProcess(pid);
+            process &proc = processList.findProcessByRef(pid);
 
             int baseCount = insCount / 6;
             int remaining = insCount - baseCount * 6;
@@ -169,20 +204,23 @@ void Scheduler::startBatchGeneration() {
                 cmds.push_back(std::make_shared<ForCommand>(loopInstructions, repeats));
             }
 
-            for (const auto& cmd : cmds) {
+            proc.clearInstructions();
+            for (const auto &cmd : cmds)
+            {
                 proc.addInstruction(cmd);
             }
 
             addProcess(proc);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(batchFreq));
-        }
-        });
+        } });
 }
 
-void Scheduler::stopBatchGeneration() {
+void Scheduler::stopBatchGeneration()
+{
     batchGenerating = false;
-    if (batchGeneratorThread.joinable()) {
+    if (batchGeneratorThread.joinable())
+    {
         batchGeneratorThread.join();
     }
 }

@@ -6,8 +6,8 @@
 #include "console.h"
 #include "Scheduler.h"
 #include "PrintCommand.h"
+#include "Config.h"
 #include <fstream>
-
 
 using std::cin;
 using std::cout;
@@ -93,8 +93,9 @@ void listScreens()
     processes.printAllProcesses();
 }
 
-void generateReport(bool toConsole = true) {
-    int totalCores = 4; 
+void generateReport(const Config &config, bool toConsole = true)
+{
+    int totalCores = config.getNumCPU();
     int usedCores = 0;
 
     std::ostringstream output;
@@ -103,8 +104,10 @@ void generateReport(bool toConsole = true) {
     output << "CPU utilization: ";
     int runningCount = 0;
 
-    for (const auto& [pid, proc] : processes.getAll()) {
-        if (proc.getState() == ProcessState::RUNNING) runningCount++;
+    for (const auto &[pid, proc] : processes.getAll())
+    {
+        if (proc.getState() == ProcessState::RUNNING)
+            runningCount++;
     }
 
     usedCores = runningCount;
@@ -115,8 +118,10 @@ void generateReport(bool toConsole = true) {
     output << "------------------------------------\n";
 
     output << "Running processes:\n";
-    for (const auto& [pid, proc] : processes.getAll()) {
-        if (proc.getState() == ProcessState::RUNNING) {
+    for (const auto &[pid, proc] : processes.getAll())
+    {
+        if (proc.getState() == ProcessState::RUNNING)
+        {
             output << std::left << std::setw(15)
                    << proc.getProcessName()
                    << std::setw(25) << proc.getCreationTime()
@@ -127,8 +132,10 @@ void generateReport(bool toConsole = true) {
     }
 
     output << "\nFinished processes:\n";
-    for (const auto& [pid, proc] : processes.getAll()) {
-        if (proc.getState() == ProcessState::FINISHED) {
+    for (const auto &[pid, proc] : processes.getAll())
+    {
+        if (proc.getState() == ProcessState::FINISHED)
+        {
             output << std::left << std::setw(15)
                    << proc.getProcessName()
                    << std::setw(25) << proc.getCreationTime()
@@ -137,9 +144,12 @@ void generateReport(bool toConsole = true) {
         }
     }
 
-    if (toConsole) {
+    if (toConsole)
+    {
         std::cout << output.str();
-    } else {
+    }
+    else
+    {
         std::ofstream file("csopesy-log.txt");
         file << output.str();
         file.close();
@@ -147,7 +157,7 @@ void generateReport(bool toConsole = true) {
     }
 }
 
-void startEmulator(Config& config)
+void startEmulator(Config &config)
 {
     string command;
     regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
@@ -173,6 +183,10 @@ void startEmulator(Config& config)
     clearScreen();
     printHeader();
 
+    cout << "Scheduler initialized with " << config.getNumCPU() << " cores and "
+         << (config.getSchedulerAlgorithm() == SchedulerAlgorithm::FCFS ? "FCFS" : "Round Robin")
+         << " algorithm." << endl;
+
     while (true)
     {
         cout << "\nEnter command: ";
@@ -185,17 +199,19 @@ void startEmulator(Config& config)
         {
             scheduler.startBatchGeneration();
         }
-        else if (command == "scheduler-stop") {
+        else if (command == "scheduler-stop")
+        {
             scheduler.stopBatchGeneration();
         }
         else if (command == "screen -ls")
         {
-            //listScreens();
-            generateReport(true); //console
+            // listScreens();
+            generateReport(config, true); // console
         }
-        else if (command == "report-util") {
-            generateReport(false); //file
-}
+        else if (command == "report-util")
+        {
+            generateReport(config, false); // file
+        }
         else if (command == "clear")
         {
             clearScreen();
@@ -238,5 +254,3 @@ void startEmulator(Config& config)
         }
     }
 }
-
-

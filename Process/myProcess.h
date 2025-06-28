@@ -41,10 +41,9 @@ private:
 	std::vector<std::shared_ptr<Command>> instructions;
 	int currentLine = 0;
 	std::string creationTime;
-	std::vector<std::string> logs; //for print command
+	std::vector<std::string> logs; // for print command
 	bool isSleeping = false;
 	uint8_t sleepTime = 0; // in milliseconds for sleep state
-	
 
 public:
 	std::unordered_map<std::string, uint16_t> variables;
@@ -76,6 +75,11 @@ public:
 	}
 
 	// Getters and setters
+	const std::vector<std::string> &getLogs() const
+	{
+		return logs;
+	}
+
 	void setSleeping(bool sleeping)
 	{
 		isSleeping = sleeping;
@@ -119,6 +123,11 @@ public:
 		return instructions;
 	}
 
+	void clearInstructions()
+	{
+		instructions.clear();
+	}
+
 	int getLineCount() const
 	{
 		int count = 0;
@@ -150,9 +159,10 @@ public:
 		coreId = id;
 	}
 
-	int getCoreId() const {
-    return coreId;
-}
+	int getCoreId() const
+	{
+		return coreId;
+	}
 
 	void setCurrentLine(int line)
 	{
@@ -182,18 +192,19 @@ public:
 		if (state == ProcessState::FINISHED)
 		{
 			std::cout << std::left << std::setw(15)
-				<< processName << std::setw(25)
-				<< creationTime << std::setw(13)
-				<< "Finished" << "Line: "
-				<< currentLine << "/" << getLineCount() << "\n";
+					  << processName << std::setw(25)
+					  << creationTime << std::setw(13)
+					  << "Finished" << "Line: "
+					  << currentLine << "/" << getLineCount() << "\n";
 		}
-		else {
+		else
+		{
 			std::cout << std::left << std::setw(15)
-				<< processName << std::setw(25)
-				<< creationTime << std::setw(8)
-				<< "Core: " << std::setw(5)
-				<< coreIdStr << "Line: "
-				<< currentLine << "/" << getLineCount() << "\n";
+					  << processName << std::setw(25)
+					  << creationTime << std::setw(8)
+					  << "Core: " << std::setw(5)
+					  << coreIdStr << "Line: "
+					  << currentLine << "/" << getLineCount() << "\n";
 		}
 	}
 	std::shared_ptr<Command> getCurrentInstruction() const
@@ -202,7 +213,8 @@ public:
 			return instructions[currentLine];
 		return nullptr;
 	}
-	void insertInstructions(int pos, const std::vector<std::shared_ptr<Command>>& cmds) {
+	void insertInstructions(int pos, const std::vector<std::shared_ptr<Command>> &cmds)
+	{
 		instructions.insert(instructions.begin() + pos, cmds.begin(), cmds.end());
 	}
 };

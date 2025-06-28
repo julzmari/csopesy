@@ -19,24 +19,28 @@ public:
     void start();
     void stop();
     void addProcess(const process &proc);
-	void startBatchGeneration();
-	void stopBatchGeneration();
+    void startBatchGeneration();
+    void stopBatchGeneration();
 
 private:
+    int batchFreq;
+    int minIns, maxIns;
+    int delaysPerExec;
+    int quantum;
+    int numCores;
+    int processCounter = 0;
+
     void schedulerThreadFunc();
     void workerThreadFunc(int coreId);
 
+    SchedulerAlgorithm schedulerType;
     ProcessList &processList;
-    int numCores;
     std::vector<std::thread> workers;
     std::thread schedulerThread;
-    std::queue<process> readyQueue;
+    std::queue<int> readyQueue;
     std::mutex queueMutex;
     std::condition_variable cv;
     std::atomic<bool> running;
     std::atomic<bool> batchGenerating = false;
     std::thread batchGeneratorThread;
-    int batchFreq;
-    int minIns, maxIns;
-    int delaysPerExec;
 };

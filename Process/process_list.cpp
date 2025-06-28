@@ -31,13 +31,28 @@ int ProcessList::findProcessByName(const std::string &processName)
 	}
 }
 
+process &ProcessList::findProcessByRef(int pid)
+{
+	auto it = processMap.find(pid);
+	if (it != processMap.end())
+	{
+		return it->second;
+	}
+	else
+	{
+		throw std::runtime_error("Process not found");
+	}
+}
+
 void ProcessList::addNewProcess(int coreId, int priority, const std::string &processName)
 {
-	int newPid = ++lastPid;
-	std::vector<std::shared_ptr<Command>> emptyCommand;
-	
-	process newProc(newPid, coreId, priority, processName, emptyCommand);
+	int newPid = getNextAvailablePid();
+	process newProc(newPid, coreId, priority, processName, {});
 	processMap[newPid] = newProc;
+	if (nameToPidMap.find(processName) != nameToPidMap.end())
+	{
+		throw std::runtime_error("Process name already exists!");
+	}
 	nameToPidMap[processName] = newPid;
 }
 
@@ -51,6 +66,11 @@ void ProcessList::updateProcess(const process &proc)
 	}
 }
 
+int ProcessList::getNextAvailablePid()
+{
+	return ++lastPid;
+}
+
 void ProcessList::printAllProcesses()
 {
 	if (processMap.empty())
@@ -59,15 +79,19 @@ void ProcessList::printAllProcesses()
 		return;
 	}
 	std::cout << "-----------------------------------\nRunning processes:\n";
-	for (const auto& [pid, proc] : processMap) {
-		if (proc.getState() == ProcessState::RUNNING) {
+	for (const auto &[pid, proc] : processMap)
+	{
+		if (proc.getState() == ProcessState::RUNNING)
+		{
 			proc.printProcessInfo();
 		}
 	}
 
 	std::cout << "\nFinished processes:\n";
-	for (const auto& [pid, proc] : processMap) {
-		if (proc.getState() == ProcessState::FINISHED) {
+	for (const auto &[pid, proc] : processMap)
+	{
+		if (proc.getState() == ProcessState::FINISHED)
+		{
 			proc.printProcessInfo();
 		}
 	}

@@ -1,5 +1,7 @@
 #include "console.h"
 #include "myProcess.h"
+#include <fstream>
+#include <string>
 
 class process;
 
@@ -9,10 +11,11 @@ class process;
 
 console::console() : proc(), totalLines(100) {}
 
-console::console(const process& proc) : proc(proc), totalLines(100) {}
+console::console(const process &proc) : proc(proc), totalLines(100) {}
 
 // Simulate inside-screen interaction
-void console::handleScreen() {
+void console::handleScreen()
+{
 #ifdef _WIN32
     system("cls");
 #else
@@ -21,15 +24,17 @@ void console::handleScreen() {
 
     std::cout << "=== Screen: " << proc.getProcessName() << " ===" << std::endl;
     std::cout << "Process: " << proc.getProcessName() << std::endl;
-    std::cout << "Instruction: Line " << proc.getCurrentLine() << " / " << totalLines << std::endl;
+    std::cout << "Instruction: Line " << proc.getCurrentLine() << " / " << proc.getLineCount() << std::endl;
     std::cout << "Created at: " << proc.getCreationTime() << std::endl;
 
     std::string input;
-    while (true) {
+    while (true)
+    {
         std::cout << "\nroot:/>";
         std::getline(std::cin, input);
 
-        if (input == "exit") {
+        if (input == "exit")
+        {
 #ifdef _WIN32
             system("cls");
 #else
@@ -37,14 +42,36 @@ void console::handleScreen() {
 #endif
             break;
         }
-        else if (input == "process-smi") {
+        else if (input == "process-smi")
+        {
             std::cout
                 << "Process: " << proc.getProcessName() << "\n"
-                << "ID: " << proc.getPid() << "\n\n"
+                << "ID: " << proc.getPid() << "\n"
                 << "Current instruction line: " << proc.getCurrentLine() << "\n"
-                << "Lines of code: " << totalLines;
+                << "Lines of code: " << proc.getLineCount() << "\n"
+                << "Created at: " << proc.getCreationTime() << "\n";
+
+            const auto &logs = proc.getLogs();
+            if (!logs.empty())
+            {
+                std::cout << "\n--- Print Logs ---\n";
+                for (const auto &entry : logs)
+                {
+                    std::cout << entry;
+                }
+            }
+            else
+            {
+                std::cout << "\nNo print logs found.\n";
+            }
+
+            if (proc.getState() == ProcessState::FINISHED)
+            {
+                std::cout << "\nFinished!" << std::endl;
+            }
         }
-        else {
+        else
+        {
             std::cout << "Unknown screen command. Only 'exit' is supported." << std::endl;
         }
     }
