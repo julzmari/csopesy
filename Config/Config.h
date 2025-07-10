@@ -20,6 +20,9 @@ private:
 	int minIns;
 	int maxIns;
 	int delaysPerExec;
+	int maxOverallMem;
+	int memPerFrame;
+	int memPerProc;
 
 public:
 	Config(const std::string &filename);
@@ -32,6 +35,9 @@ public:
 	int getMinIns() const { return minIns; }
 	int getMaxIns() const { return maxIns; }
 	int getDelaysPerExec() const { return delaysPerExec; }
+	int getMaxOverallMem() const { return maxOverallMem; }
+	int getMemPerFrame() const { return memPerFrame; }
+	int getMemPerProc() const { return memPerProc; }
 };
 
 #endif

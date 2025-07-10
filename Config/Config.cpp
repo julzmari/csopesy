@@ -98,8 +98,26 @@ Config::Config(const string& filename) :
             }
             else if (key == "delay-per-exec") {
                 iss >> delaysPerExec;
-                if (delaysPerExec < 0) {
+                if (delaysPerExec < 0 || maxIns > 4294967296) {
                     throw out_of_range("delay-per-exec must be between 0 and 4294967296");
+                }
+            }
+            else if (key == "max-overall-mem") {
+				iss >> maxOverallMem;
+                if (maxOverallMem < 64 || maxOverallMem > 65536) {
+                    throw out_of_range("max-overall-mem must be between 64 and 65536");
+                }
+            }
+            else if (key == "mem-per-frame") {
+				iss >> memPerFrame;
+                if (memPerFrame < 64 || memPerFrame > 65536) {
+                    throw out_of_range("mem-per-frame must be between 64 and 65536");
+                }
+            }
+            else if (key == "mem-per-proc") {
+				iss >> memPerProc;
+                if (memPerProc < 64 || memPerProc > 65536) {
+                    throw out_of_range("mem-per-proc must be between 64 and 65536");
                 }
             }
         }
