@@ -6,7 +6,7 @@
 class ForCommand : public Command {
 public:
 	ForCommand(const std::vector<std::shared_ptr<Command>>& instructions, int repeats);
-	void execute(process& context);
+	void execute(process& context) override;
 	std::shared_ptr<Command> clone() const override;
 public:
 	std::vector<std::shared_ptr<Command>> instructions;

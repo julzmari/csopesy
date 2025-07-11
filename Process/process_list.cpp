@@ -2,6 +2,7 @@
 
 process ProcessList::findProcess(int pid)
 {
+	std::lock_guard<std::mutex> lock(mtx);
 	auto it = processMap.find(pid);
 	if (it != processMap.end())
 	{
@@ -15,11 +16,13 @@ process ProcessList::findProcess(int pid)
 
 bool ProcessList::ifProcessNameExists(const std::string &processName)
 {
+	std::lock_guard<std::mutex> lock(mtx);
 	return nameToPidMap.find(processName) != nameToPidMap.end();
 }
 
 int ProcessList::findProcessByName(const std::string &processName)
 {
+	std::lock_guard<std::mutex> lock(mtx);
 	auto it = nameToPidMap.find(processName);
 	if (it != nameToPidMap.end())
 	{
@@ -33,6 +36,7 @@ int ProcessList::findProcessByName(const std::string &processName)
 
 process &ProcessList::findProcessByRef(int pid)
 {
+	std::lock_guard<std::mutex> lock(mtx);
 	auto it = processMap.find(pid);
 	if (it != processMap.end())
 	{
@@ -46,6 +50,7 @@ process &ProcessList::findProcessByRef(int pid)
 
 void ProcessList::addNewProcess(int coreId, int priority, const std::string &processName)
 {
+	std::lock_guard<std::mutex> lock(mtx);
 	int newPid = getNextAvailablePid();
 	process newProc(newPid, coreId, priority, processName, {});
 	processMap[newPid] = newProc;
@@ -58,6 +63,7 @@ void ProcessList::addNewProcess(int coreId, int priority, const std::string &pro
 
 void ProcessList::updateProcess(const process &proc)
 {
+	std::lock_guard<std::mutex> lock(mtx);
 	int pid = proc.getPid();
 	auto it = processMap.find(pid);
 	if (it != processMap.end())
@@ -73,27 +79,40 @@ int ProcessList::getNextAvailablePid()
 
 void ProcessList::printAllProcesses()
 {
+	std::lock_guard<std::mutex> lock(mtx);
 	if (processMap.empty())
 	{
 		std::cout << "No processes found." << std::endl;
 		return;
 	}
 	std::cout << "-----------------------------------\nRunning processes:\n";
-	for (const auto &[pid, proc] : processMap)
+	for (const auto &pair : processMap)
 	{
+		const process &proc = pair.second;
 		if (proc.getState() == ProcessState::RUNNING)
+		{
+			proc.printProcessInfo();
+		}
+	}
+	std::cout << "\nReady processes:\n";
+	for (const auto &pair : processMap)
+	{
+		const process &proc = pair.second;
+		if (proc.getState() == ProcessState::READY)
 		{
 			proc.printProcessInfo();
 		}
 	}
 
 	std::cout << "\nFinished processes:\n";
-	for (const auto &[pid, proc] : processMap)
+	for (const auto &pair : processMap)
 	{
+		const process &proc = pair.second;
 		if (proc.getState() == ProcessState::FINISHED)
 		{
 			proc.printProcessInfo();
 		}
 	}
-	std::cout << "-----------------------------------";
+	
+    
 }

@@ -106,6 +106,7 @@ public:
 	}
 	void setState(ProcessState newState)
 	{
+		//std::cout << "[DIAG] setState called for PID " << pid << " from " << static_cast<int>(state) << " to " << static_cast<int>(newState) << std::endl;
 		state = newState;
 	}
 	ProcessState getState() const

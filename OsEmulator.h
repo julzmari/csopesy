@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include "process_list.h"
 #include "console.h"
-#include "Scheduler.h"
+#include "scheduler.h"
 #include "PrintCommand.h"
 #include "Config.h"
 #include <fstream>
@@ -90,6 +90,7 @@ void createOrResumeScreen(const string &cmd, const string &name)
 
 void listScreens()
 {
+    //std::cout << "[DIAG] listScreens called" << std::endl;
     processes.printAllProcesses();
 }
 
@@ -104,8 +105,9 @@ void generateReport(const Config &config, bool toConsole = true)
     output << "CPU utilization: ";
     int runningCount = 0;
 
-    for (const auto &[pid, proc] : processes.getAll())
+    for (const auto &pair : processes.getAll())
     {
+        const process &proc = pair.second;
         if (proc.getState() == ProcessState::RUNNING)
             runningCount++;
     }
@@ -118,8 +120,9 @@ void generateReport(const Config &config, bool toConsole = true)
     output << "------------------------------------\n";
 
     output << "Running processes:\n";
-    for (const auto &[pid, proc] : processes.getAll())
+    for (const auto &pair : processes.getAll())
     {
+        const process &proc = pair.second;
         if (proc.getState() == ProcessState::RUNNING)
         {
             output << std::left << std::setw(15)
@@ -132,8 +135,9 @@ void generateReport(const Config &config, bool toConsole = true)
     }
 
     output << "\nFinished processes:\n";
-    for (const auto &[pid, proc] : processes.getAll())
+    for (const auto &pair : processes.getAll())
     {
+        const process &proc = pair.second;
         if (proc.getState() == ProcessState::FINISHED)
         {
             output << std::left << std::setw(15)
@@ -155,6 +159,14 @@ void generateReport(const Config &config, bool toConsole = true)
         file.close();
         std::cout << "Report generated at C:/csopesy-log.txt!\n";
     }
+
+    // Diagnostic: print all PIDs and their states at report time
+    //std::cout << "[DIAG] generateReport: process states at report time:" << std::endl;
+    //for (const auto &pair : processes.getAll())
+    //{
+     //   const process &proc = pair.second;
+    //    std::cout << "PID: " << pair.first << " State: " << static_cast<int>(proc.getState()) << std::endl;
+    //}
 }
 
 void startEmulator(Config &config)
@@ -162,7 +174,8 @@ void startEmulator(Config &config)
     string command;
     regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
     smatch match;
-    Scheduler scheduler(processes, config);
+    MemoryManager memoryManager(config.getMaxOverallMem(), config.getMemPerFrame());
+    Scheduler scheduler(processes, config, memoryManager);
 
     // PRINT COMMMANDS
     /*for (int i = 1; i <= 10; ++i)
