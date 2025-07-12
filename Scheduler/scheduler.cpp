@@ -378,6 +378,12 @@ void Scheduler::startBatchGeneration()
                         totalIns += forIns;
                     }
 
+                    while (totalIns < maxIns)
+                    {
+                        cmds.push_back(std::make_shared<PrintCommand>());
+                        totalIns += 1;
+                    }
+
                     proc.clearInstructions();
                     for (const auto &cmd : cmds) {
                         proc.addInstruction(cmd);
