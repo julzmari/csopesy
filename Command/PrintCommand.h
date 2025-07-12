@@ -8,7 +8,7 @@ class PrintCommand : public Command {
         explicit PrintCommand(uint16_t value);
 		PrintCommand();
         PrintCommand(const std::string& msg);
-        void execute(process& context);
+        void execute(process& context) override;
         std::shared_ptr<Command> clone() const override {
             return std::make_shared<PrintCommand>(*this);
         }

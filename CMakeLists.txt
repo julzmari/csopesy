@@ -16,6 +16,7 @@ include_directories(Screen)
 include_directories(Process)
 include_directories(Config)
 include_directories(Scheduler)
+include_directories(Memory)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
@@ -26,9 +27,10 @@ add_executable (CSOPESY_MCO
 				"Command/PrintCommand.h" "Command/PrintCommand.cpp"
 				"Screen/console.h" "Screen/console.cpp"
 				"Process/myProcess.h" "Process/process_list.h" "Process/process_list.cpp"
-				"Scheduler/Scheduler.h" "Scheduler/Scheduler.cpp"
+				"Scheduler/scheduler.h" "Scheduler/scheduler.cpp"
 				"Command/Command.h"    "Command/DeclareCommand.cpp" "Command/DeclareCommand.h" 
-				"Command/AddCommand.cpp" "Command/AddCommand.h" "Command/SubtractCommand.cpp" "Command/SubtractCommand.h" "Command/SleepCommand.h" "Command/SleepCommand.cpp" "Command/ForCommand.cpp" "Command/ForCommand.h")
+				"Command/AddCommand.cpp" "Command/AddCommand.h" "Command/SubtractCommand.cpp" "Command/SubtractCommand.h" "Command/SleepCommand.h" "Command/SleepCommand.cpp" "Command/ForCommand.cpp" "Command/ForCommand.h"
+				"Memory/MemoryManager.cpp" "Memory/MemoryManager.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CSOPESY_MCO PROPERTY CXX_STANDARD 20)

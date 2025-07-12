@@ -98,7 +98,7 @@ Config::Config(const string& filename) :
             }
             else if (key == "delay-per-exec") {
                 iss >> delaysPerExec;
-                if (delaysPerExec < 0 || maxIns > 4294967296) {
+                if (delaysPerExec < 0 || delaysPerExec > 4294967296) {
                     throw out_of_range("delay-per-exec must be between 0 and 4294967296");
                 }
             }
@@ -110,8 +110,8 @@ Config::Config(const string& filename) :
             }
             else if (key == "mem-per-frame") {
 				iss >> memPerFrame;
-                if (memPerFrame < 64 || memPerFrame > 65536) {
-                    throw out_of_range("mem-per-frame must be between 64 and 65536");
+                if (memPerFrame < 16 || memPerFrame > 65536) {
+                    throw out_of_range("mem-per-frame must be between 16 and 65536");
                 }
             }
             else if (key == "mem-per-proc") {

@@ -10,17 +10,20 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
-#include "config.h"
+#include "Config.h"
+#include "MemoryManager.h"
 
 class Scheduler
 {
 public:
-    Scheduler(ProcessList &plist, Config &config);
+    Scheduler(ProcessList &plist, Config &config, MemoryManager &memManager);
     void start();
     void stop();
     void addProcess(const process &proc);
     void startBatchGeneration();
     void stopBatchGeneration();
+    int getNumCores() const { return numCores; }
+    int getCoreAssignment(int core) const { return coreAssignments[core]; }
 
 private:
     int batchFreq;
@@ -28,13 +31,17 @@ private:
     int delaysPerExec;
     int quantum;
     int numCores;
-    int processCounter = 0;
+    std::atomic<int> processCounter{0};
+    int quantumCycle = 0; 
+    int memPerProc; // Store memPerProc from config
+    void snapshotMemory(int cycle);
 
     void schedulerThreadFunc();
     void workerThreadFunc(int coreId);
 
     SchedulerAlgorithm schedulerType;
     ProcessList &processList;
+    MemoryManager &memoryManager;
     std::vector<std::thread> workers;
     std::thread schedulerThread;
     std::queue<int> readyQueue;
@@ -44,4 +51,5 @@ private:
     std::atomic<bool> batchGenerating = false;
     std::thread batchGeneratorThread;
     std::shared_ptr<Command> generateForBlock(int currentDepth, const std::string &procName);
+    std::vector<int> coreAssignments; // coreAssignments[coreId] = pid or -1 if idle
 };
