@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include "Command.h"
 #include "ForCommand.h"
+#include <MemoryManager.h>
 
 enum class ProcessState
 {
@@ -44,18 +45,22 @@ private:
 	std::vector<std::string> logs; // for print command
 	bool isSleeping = false;
 	uint8_t sleepTime = 0; // in milliseconds for sleep state
+	MemoryManager* memoryManager = nullptr;
 
 public:
 	std::unordered_map<std::string, uint16_t> variables;
 	// Constructor
-	process(int pid, int coreId, int priority, const std::string &processName, const std::vector<std::shared_ptr<Command>> &instructions)
-		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions)
+	process(int pid, int coreId, int priority, const std::string& processName,
+		const std::vector<std::shared_ptr<Command>>& instructions,
+		MemoryManager* memMgr)
+		: pid(pid), coreId(coreId), priority(priority), processName(processName),
+		instructions(instructions), memoryManager(memMgr)
 	{
 		creationTime = getCurrentTimeString();
 		state = ProcessState::READY;
 	}
 
-	process() : pid(0), coreId(-1), priority(0), processName("")
+	process() : pid(0), coreId(-1), priority(0), processName(""), memoryManager(nullptr)
 	{
 		creationTime = getCurrentTimeString();
 		state = ProcessState::READY;
@@ -75,6 +80,8 @@ public:
 	}
 
 	// Getters and setters
+	MemoryManager* getMemoryManager() const { return memoryManager; }
+
 	const std::vector<std::string> &getLogs() const
 	{
 		return logs;

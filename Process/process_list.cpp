@@ -10,7 +10,7 @@ process ProcessList::findProcess(int pid)
 	}
 	else
 	{
-		return process(-1, -1, -1, "Unknown", {}); // Return an invalid process if not found
+		return process(-1, -1, -1, "Unknown", {}, nullptr); // Return an invalid process if not found
 	}
 }
 
@@ -48,11 +48,11 @@ process &ProcessList::findProcessByRef(int pid)
 	}
 }
 
-void ProcessList::addNewProcess(int coreId, int priority, const std::string &processName)
+void ProcessList::addNewProcess(int coreId, int priority, const std::string& processName)
 {
 	std::lock_guard<std::mutex> lock(mtx);
 	int newPid = getNextAvailablePid();
-	process newProc(newPid, coreId, priority, processName, {});
+	process newProc(newPid, coreId, priority, processName, {}, nullptr); // Pass nullptr for MemoryManager  
 	processMap[newPid] = newProc;
 	if (nameToPidMap.find(processName) != nameToPidMap.end())
 	{

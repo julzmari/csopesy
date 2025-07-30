@@ -2,6 +2,7 @@
 #include <vector>
 #include <utility>
 #include <mutex>
+#include <unordered_map>
 
 class MemoryManager
 {
@@ -22,6 +23,9 @@ public:
     bool isAllocated(int processId) const;
     int getFrameSize() const;
     std::vector<Block> getBlocksSnapshot() const;
+    bool isValidAddress(uint32_t address) const;
+    uint16_t readUint16(uint32_t address) const;
+    void writeUint16(uint32_t address, uint16_t value);
 
 private:
     int totalBytes;
@@ -30,4 +34,5 @@ private:
     std::vector<Block> blocks; // contiguous blocks, some free, some allocated
     mutable std::mutex mtx;    // Mutex for thread-safe access, now mutable
     void mergeFreeBlocks();
+    std::unordered_map<uint32_t, uint16_t> memory;
 };

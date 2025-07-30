@@ -140,3 +140,25 @@ std::vector<MemoryManager::Block> MemoryManager::getBlocksSnapshot() const
     std::lock_guard<std::mutex> lock(mtx);
     return blocks;
 }
+
+bool MemoryManager::isValidAddress(uint32_t address) const {
+    return address < static_cast<uint32_t>(totalBytes) && address % 2 == 0;
+}
+
+uint16_t MemoryManager::readUint16(uint32_t address) const {
+    if (!isValidAddress(address)) {
+        throw std::runtime_error("Access violation: Invalid memory address");
+    }
+    auto it = memory.find(address);
+    if (it != memory.end()) {
+        return it->second;
+    }
+    return 0;
+}
+
+void MemoryManager::writeUint16(uint32_t address, uint16_t value) {
+    if (!isValidAddress(address)) {
+        throw std::runtime_error("Access violation: Invalid memory address");
+    }
+    memory[address] = value;
+}
