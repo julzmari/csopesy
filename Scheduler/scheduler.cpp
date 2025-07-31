@@ -34,6 +34,7 @@ Scheduler::Scheduler(ProcessList &plist, Config &config, MemoryManager &memManag
       memoryManager(memManager),
       memPerProc(config.getMemPerProc()),
       coreAssignments(config.getNumCPU(), -1)
+      
 {
 }
 

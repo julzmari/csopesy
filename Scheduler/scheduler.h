@@ -24,6 +24,8 @@ public:
     void stopBatchGeneration();
     int getNumCores() const { return numCores; }
     int getCoreAssignment(int core) const { return coreAssignments[core]; }
+    MemoryManager& getMemoryManager() { return memoryManager; }
+
 
 private:
     int batchFreq;

@@ -4,35 +4,31 @@
 #include "OsEmulator.h"
 #include <fstream>
 #include <filesystem>
+#include <thread>
+#include <chrono>
 
 using namespace std;
-int main()
-{
+
+int main() {
     cout << "Program Start\n" << endl;
 
-    string command;
     Config config("Config/config.txt");
 
-    while (true)
-    {
-        cout << "Enter command: ";
-        getline(cin, command);
-
+    string command;
+    while (true) {
+        std::cout << std::endl << "Enter command: " << std::flush; 
+        std::getline(std::cin, command);
+    
         trimSpaces(command);
-
-        if (command == "initialize")
-        {
+    
+        if (command == "initialize") {
             startEmulator(config);
             break;
-        }
-        else if (command == "exit")
-        {
-            cout << "exit command recognized. Exiting program." << endl;
+        } else if (command == "exit") {
+            std::cout << "Exiting program..." << std::endl;
             break;
-        }
-        else
-        {
-            cout << "Unknown command. Please try again." << endl;
+        } else {
+            std::cout << "Unknown command. Please try again." << std::endl;
         }
     }
 

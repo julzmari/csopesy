@@ -72,6 +72,21 @@ void ProcessList::updateProcess(const process &proc)
 	}
 }
 
+void ProcessList::removeProcess(int pid) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    processMap.erase(pid);
+
+    for (auto it = nameToPidMap.begin(); it != nameToPidMap.end(); ) {
+        if (it->second == pid) {
+            it = nameToPidMap.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+
 int ProcessList::getNextAvailablePid()
 {
 	return ++lastPid;

@@ -20,6 +20,8 @@ public:
     int findProcessByName(const std::string &processName);
     bool ifProcessNameExists(const std::string &processName);
     int getNextAvailablePid();
+    void removeProcess(int pid);
+
 
     // Safe access to a process by reference using a lambda
     template<typename Func>

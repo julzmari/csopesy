@@ -1,0 +1,8 @@
+CPU utilization: 0%
+Cores used: 0
+Cores available: 2
+------------------------------------
+Running processes:
+
+Finished processes:
+process2       07/31/2025 19:52:37      Finished 6 / 6

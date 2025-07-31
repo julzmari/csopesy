@@ -46,6 +46,8 @@ private:
 	bool isSleeping = false;
 	uint8_t sleepTime = 0; // in milliseconds for sleep state
 	MemoryManager* memoryManager = nullptr;
+	int memorySize = 0;
+	
 
 public:
 	std::unordered_map<std::string, uint16_t> variables;
@@ -81,6 +83,15 @@ public:
 
 	// Getters and setters
 	MemoryManager* getMemoryManager() const { return memoryManager; }
+	void setMemorySize(int size) { memorySize = size; }
+	int getMemorySize() const { return memorySize; }
+
+	void setMemoryManager(MemoryManager* mgr) 
+	{ 
+		memoryManager = mgr; 
+	}
+	
+
 
 	const std::vector<std::string> &getLogs() const
 	{

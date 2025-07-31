@@ -6,8 +6,19 @@
 #include "console.h"
 #include "scheduler.h"
 #include "PrintCommand.h"
+#include "DeclareCommand.h"
+#include "AddCommand.h"
+#include "SubtractCommand.h"
+#include "SleepCommand.h"
+#include "ForCommand.h"
+#include "ReadCommand.h"
+#include "WriteCommand.h"
 #include "Config.h"
 #include <fstream>
+#include <sstream>
+#include <vector>
+#include <iomanip>
+
 
 using std::cin;
 using std::cout;
@@ -17,6 +28,88 @@ using std::smatch;
 using std::string;
 
 ProcessList processes;
+
+// Function to parse a single instruction
+std::shared_ptr<Command> parseInstruction(const std::string& instruction) {
+    std::istringstream iss(instruction);
+    std::string cmd;
+    iss >> cmd;
+    
+    if (cmd == "DECLARE") {
+        std::string varName;
+        uint16_t value;
+        iss >> varName >> value;
+        return std::make_shared<DeclareCommand>(varName, value);
+    }
+    else if (cmd == "ADD") {
+        std::string var1, var2, var3;
+        iss >> var1 >> var2 >> var3;
+        return std::make_shared<AddCommand>(var1, var2, var3);
+    }
+    else if (cmd == "SUBTRACT") {
+        std::string var1, var2, var3;
+        iss >> var1 >> var2 >> var3;
+        return std::make_shared<SubtractCommand>(var1, var2, var3);
+    }
+    else if (cmd.substr(0, 5) == "PRINT") {
+        std::string rest = instruction.substr(5); // everything after 'PRINT'
+        // Trim whitespace
+        rest.erase(0, rest.find_first_not_of(" \t("));
+        rest.erase(rest.find_last_not_of(" \t)") + 1);
+
+        // Remove surrounding quotes if present
+        if (rest.length() >= 2 && rest[0] == '"' && rest[rest.length()-1] == '"') {
+            rest = rest.substr(1, rest.length()-2);
+        }
+        return std::make_shared<PrintCommand>(rest);
+    }
+    else if (cmd == "SLEEP") {
+        uint8_t sleepTime;
+        iss >> sleepTime;
+        return std::make_shared<SleepCommand>(sleepTime);
+    }
+    else if (cmd == "READ") {
+        std::string varName;
+        std::string addressStr;
+        iss >> varName >> addressStr;
+        // Parse hex address
+        uint16_t address = std::stoul(addressStr, nullptr, 16);
+        return std::make_shared<ReadCommand>(varName, address);
+    }
+    else if (cmd == "WRITE") {
+        std::string addressStr, varName;
+        iss >> addressStr >> varName;
+        // Parse hex address
+        uint16_t address = std::stoul(addressStr, nullptr, 16);
+        return std::make_shared<WriteCommand>(address, varName);
+    }
+    else {
+        throw std::runtime_error("Unknown instruction: " + cmd);
+    }
+}
+
+// Function to parse instruction string and create commands
+std::vector<std::shared_ptr<Command>> parseInstructions(const std::string& instructionString) {
+    std::vector<std::shared_ptr<Command>> commands;
+    std::istringstream iss(instructionString);
+    std::string instruction;
+    
+    while (std::getline(iss, instruction, ';')) {
+        // Trim whitespace
+        instruction.erase(0, instruction.find_first_not_of(" \t"));
+        instruction.erase(instruction.find_last_not_of(" \t") + 1);
+        
+        if (!instruction.empty()) {
+            try {
+                commands.push_back(parseInstruction(instruction));
+            } catch (const std::exception& e) {
+                throw std::runtime_error("Error parsing instruction '" + instruction + "': " + e.what());
+            }
+        }
+    }
+    
+    return commands;
+}
 
 void clearScreen()
 {
@@ -85,6 +178,62 @@ void createOrResumeScreen(const string &cmd, const string &name)
         {
             cout << "No screen found with name '" << name << "'. Use 'screen -s " << name << "' to create one." << endl;
         }
+    }
+}
+
+// Create process with custom instructions
+// Update function signature to accept Scheduler&
+void createProcessWithInstructions(const string &processName, int memorySize, const string &instructions, Scheduler& scheduler)
+{
+    if (processes.ifProcessNameExists(processName))
+    {
+        cout << "Process '" << processName << "' already exists." << endl;
+        return;
+    }
+    
+    try {
+        // Parse instructions
+        std::vector<std::shared_ptr<Command>> commands = parseInstructions(instructions);
+        
+        // Validate instruction count (1-50)
+        if (commands.size() < 1 || commands.size() > 50) {
+            cout << "Invalid command: Instruction count must be between 1 and 50." << endl;
+            return;
+        }
+        
+        // Create process
+        processes.addNewProcess(-1, 0, processName);
+        int pid = processes.findProcessByName(processName);
+        
+        if (pid == -1) {
+            cout << "Failed to create process." << endl;
+            return;
+        }
+
+        if (!scheduler.getMemoryManager().allocate(pid, memorySize)) {
+            cout << "Error: Not enough memory to allocate " << memorySize << " bytes for process '" 
+                 << processName << "'." << endl;
+            processes.removeProcess(pid);
+            return;
+        }
+        
+        // Add instructions to process
+        processes.withProcessByRef(pid, [&](process& proc) {
+            proc.clearInstructions();
+            proc.setMemoryManager(&scheduler.getMemoryManager()); 
+            proc.setMemorySize(memorySize);
+            for (const auto& cmd : commands) {
+                proc.addInstruction(cmd);
+            }
+        });
+        
+        // Add process to scheduler's ready queue
+        scheduler.addProcess(processes.findProcess(pid));
+        
+        cout << "Process '" << processName << "' created with " << commands.size() << " instructions." << endl;
+        
+    } catch (const std::exception& e) {
+        cout << "Error creating process: " << e.what() << endl;
     }
 }
 
@@ -173,6 +322,8 @@ void startEmulator(Config &config)
 {
     string command;
     regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
+    regex customPattern("^screen -c\\s+(\\S+)\\s+(\\d+)\\s+\"(.*)\"\\s*$");
+
     smatch match;
     MemoryManager memoryManager(config.getMaxOverallMem(), config.getMemPerFrame());
     Scheduler scheduler(processes, config, memoryManager);
@@ -208,6 +359,8 @@ void startEmulator(Config &config)
         // Trim leading and trailing spaces
         trimSpaces(command);
 
+        //cout << "[DEBUG] Raw command: " << command << endl;
+
         if (command == "scheduler-start")
         {
             scheduler.startBatchGeneration();
@@ -236,8 +389,17 @@ void startEmulator(Config &config)
             scheduler.stop();
             break;
         }
+        // Handle screen -c command for custom instructions
+        else if (std::regex_match(command, match, customPattern))
+        {
+            string processName = match[1];
+            int memorySize = std::stoi(match[2]);
+            string instructions = match[3];
+            
+            createProcessWithInstructions(processName, memorySize, instructions, scheduler);
+        }
         // create new process or resume existing screen session
-        else if (regex_match(command, match, pattern))
+        else if (std::regex_match(command, match, pattern))
         {
             string prefix = command.substr(0, 9); // "screen -s" or "screen -r"
             string name = command.substr(9);
@@ -260,6 +422,11 @@ void startEmulator(Config &config)
         }
         else if (command == "screen --help")
         {
+            cout << "Available screen commands:" << endl;
+            cout << "  screen -s <name>     : Create new process" << endl;
+            cout << "  screen -r <name>     : Resume existing process" << endl;
+            cout << "  screen -c <name> <mem> \"<instructions>\" : Create process with custom instructions" << endl;
+            cout << "  screen -ls           : List all processes" << endl;
         }
         else
         {
