@@ -149,7 +149,7 @@ void printHeader()
 }
 
 // Create or resume screen
-void createOrResumeScreen(const string &cmd, const string &name)
+void createOrResumeScreen(const string &cmd, const string &name, int memSize, Scheduler& scheduler)
 {
     if (cmd == "screen -s")
     { // Create new process
@@ -161,7 +161,26 @@ void createOrResumeScreen(const string &cmd, const string &name)
         {
             std::vector<std::string> instructions;
             processes.addNewProcess(-1, 0, name);
-            processes.printAllProcesses();
+            int pid = processes.findProcessByName(name);
+
+            if (pid == -1) {
+                cout << "Failed to create process." << endl;
+                return;
+            }
+
+            if (!scheduler.getMemoryManager().allocate(pid, memSize)) {
+                cout << "Error: Not enough memory to allocate " << memSize << " bytes for process '" << name << "'." << endl;
+                processes.removeProcess(pid);
+                return;
+            }
+
+            processes.withProcessByRef(pid, [&](process& proc) {
+                proc.setMemorySize(memSize);
+                proc.setMemoryManager(&scheduler.getMemoryManager());
+                });
+
+            scheduler.addProcess(processes.findProcess(pid));
+            cout << "Process '" << name << "' created and added to scheduler with " << memSize << " bytes of memory." << endl;
         }
     }
     else if (cmd == "screen -r")
@@ -321,26 +340,12 @@ void generateReport(const Config &config, bool toConsole = true)
 void startEmulator(Config &config)
 {
     string command;
-    regex pattern(R"(^screen -[rs](?:\s+[^\s]+(?:\s+[^\s]+)*)?\s*$)");
+    regex pattern(R"(^screen -([rs])(?:\s+([^\s]+))(?:\s+(\d+))?\s*$)");
     regex customPattern("^screen -c\\s+(\\S+)\\s+(\\d+)\\s+\"(.*)\"\\s*$");
 
     smatch match;
     MemoryManager memoryManager(config.getMaxOverallMem(), config.getMemPerFrame());
     Scheduler scheduler(processes, config, memoryManager);
-
-    // PRINT COMMMANDS
-    /*for (int i = 1; i <= 10; ++i)
-    {
-        std::vector<std::string> instructions;
-        for (int j = 1; j <= 100; ++j)
-        {
-            instructions.push_back("Print command " + std::to_string(j));
-        }
-
-        processes.addNewProcess(-1, 0, "Process" + std::to_string(i));
-        int pid = processes.findProcessByName("Process" + std::to_string(i));
-        scheduler.addProcess(processes.findProcess(pid));
-    }*/
 
     scheduler.start();
 
@@ -356,7 +361,6 @@ void startEmulator(Config &config)
         cout << "\nEnter command: ";
         getline(cin, command);
 
-        // Trim leading and trailing spaces
         trimSpaces(command);
 
         //cout << "[DEBUG] Raw command: " << command << endl;
@@ -401,23 +405,51 @@ void startEmulator(Config &config)
         // create new process or resume existing screen session
         else if (std::regex_match(command, match, pattern))
         {
-            string prefix = command.substr(0, 9); // "screen -s" or "screen -r"
-            string name = command.substr(9);
 
-            // Trim leading and trailing spaces
-            trimSpaces(name);
+            if (regex_match(command, match, pattern))
+            {
+                string mode = match[1];  // 's' or 'r'
+                string name = match[2];  // process name
 
-            if (name.find(' ') != string::npos)
-            {
-                cout << "Screen name cannot contain spaces. Usage: screen -s <name> or screen -r <name>" << endl;
-            }
-            else if (!name.empty())
-            {
-                createOrResumeScreen(prefix, name);
-            }
-            else
-            {
-                cout << "Please provide a screen name. Usage: screen -s <name> or screen -r <name>" << endl;
+                trimSpaces(name);
+
+                if (name.find(' ') != string::npos)
+                {
+                    cout << "Screen name cannot contain spaces. Usage: screen -s <name> <memory_size> or screen -r <name>" << endl;
+                }
+                else if (name.empty())
+                {
+                    cout << "Please provide a screen name. Usage: screen -s <name> <memory_size> or screen -r <name>" << endl;
+                }
+                else if (mode == "r")
+                {
+                    createOrResumeScreen("screen -r", name, -1, scheduler);
+                }
+                else if (mode == "s")
+                {
+                    if (match.size() < 4 || match[3].str().empty())
+                    {
+                        cout << "Memory size is required. Usage: screen -s <name> <memory_size>" << endl;
+                    }
+                    else
+                    {
+                        int memSize = stoi(match[3]);
+
+                        auto isPowerOfTwo = [](int n)
+                            {
+                                return n >= 64 && n <= 65536 && (n & (n - 1)) == 0;
+                            };
+
+                        if (!isPowerOfTwo(memSize))
+                        {
+                            cout << "Invalid memory allocation. Size must be a power of 2 between 64 and 65536." << endl;
+                        }
+                        else
+                        {
+                            createOrResumeScreen("screen -s", name, memSize, scheduler);
+                        }
+                    }
+                }
             }
         }
         else if (command == "screen --help")
