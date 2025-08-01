@@ -32,9 +32,9 @@ Scheduler::Scheduler(ProcessList &plist, Config &config, MemoryManager &memManag
       schedulerType(config.getSchedulerAlgorithm()),
       quantum(config.getQuantumCycles()),
       memoryManager(memManager),
-      memPerProc(config.getMemPerProc()),
+      minMemPerProc(config.getMinMemPerProc()),
+      maxMemPerProc(config.getMaxMemPerProc()),
       coreAssignments(config.getNumCPU(), -1)
-      
 {
 }
 
@@ -110,9 +110,11 @@ void Scheduler::workerThreadFunc(int coreId)
         try
         {
             process &proc = processList.findProcessByRef(pid);
+            int requiredMemory = proc.getMemorySize();
             if (!memoryManager.isAllocated(proc.getPid()))
             {
-                if (!memoryManager.allocate(proc.getPid(), memPerProc))
+                if (!memoryManager.allocate(proc.getPid(), requiredMemory))
+
                 {
                     proc.setState(ProcessState::READY);
                     {
@@ -218,7 +220,7 @@ void Scheduler::snapshotMemory(int cycle)
     int extFrag = 0;
     for (const auto &block : blocks)
     {
-        if (block.ownerPid == -1 && frameSize > 0 && (block.numFrames * frameSize) < memPerProc)
+        if (block.ownerPid == -1 && frameSize > 0 && (block.numFrames * frameSize) < minMemPerProc)
         {
             extFrag += block.numFrames * frameSize;
         }
@@ -313,6 +315,15 @@ void Scheduler::startBatchGeneration()
                 }
 
                 processList.withProcessByRef(pid, [&](process &proc) {
+                    int minExp = static_cast<int>(log2(minMemPerProc));
+                    int maxExp = static_cast<int>(log2(maxMemPerProc));
+                    int randExp = minExp + (rand() % (maxExp - minExp + 1));
+                    int memSize = 1 << randExp;
+
+                    proc.setMemorySize(memSize);
+                    proc.setMemoryManager(&memoryManager);
+
+
                     std::unordered_map<std::string, int> instrCount = {
                         {"DECLARE", 0},
                         {"ADD", 0},

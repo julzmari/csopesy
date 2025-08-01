@@ -35,7 +35,7 @@ private:
     int numCores;
     std::atomic<int> processCounter{0};
     int quantumCycle = 0; 
-    int memPerProc; // Store memPerProc from config
+    int minMemPerProc, maxMemPerProc;
     void snapshotMemory(int cycle);
 
     void schedulerThreadFunc();

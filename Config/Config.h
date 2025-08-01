@@ -22,7 +22,8 @@ private:
 	int delaysPerExec;
 	int maxOverallMem;
 	int memPerFrame;
-	int memPerProc;
+	int minMemPerProc;
+	int maxMemPerProc;
 
 public:
 	Config(const std::string &filename);
@@ -37,7 +38,8 @@ public:
 	int getDelaysPerExec() const { return delaysPerExec; }
 	int getMaxOverallMem() const { return maxOverallMem; }
 	int getMemPerFrame() const { return memPerFrame; }
-	int getMemPerProc() const { return memPerProc; }
+	int getMinMemPerProc() const { return minMemPerProc; }
+	int getMaxMemPerProc() const { return maxMemPerProc; }
 };
 
 #endif
