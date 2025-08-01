@@ -149,7 +149,7 @@ void printHeader()
 }
 
 // Create or resume screen
-void createOrResumeScreen(const string &cmd, const string &name, int memSize)
+void createOrResumeScreen(const string &cmd, const string &name, int memSize, Scheduler& scheduler)
 {
     if (cmd == "screen -s")
     { // Create new process
@@ -161,7 +161,26 @@ void createOrResumeScreen(const string &cmd, const string &name, int memSize)
         {
             std::vector<std::string> instructions;
             processes.addNewProcess(-1, 0, name);
-            processes.printAllProcesses();
+            int pid = processes.findProcessByName(name);
+
+            if (pid == -1) {
+                cout << "Failed to create process." << endl;
+                return;
+            }
+
+            if (!scheduler.getMemoryManager().allocate(pid, memSize)) {
+                cout << "Error: Not enough memory to allocate " << memSize << " bytes for process '" << name << "'." << endl;
+                processes.removeProcess(pid);
+                return;
+            }
+
+            processes.withProcessByRef(pid, [&](process& proc) {
+                proc.setMemorySize(memSize);
+                proc.setMemoryManager(&scheduler.getMemoryManager());
+                });
+
+            scheduler.addProcess(processes.findProcess(pid));
+            cout << "Process '" << name << "' created and added to scheduler with " << memSize << " bytes of memory." << endl;
         }
     }
     else if (cmd == "screen -r")
@@ -404,7 +423,7 @@ void startEmulator(Config &config)
                 }
                 else if (mode == "r")
                 {
-                    createOrResumeScreen("screen -r", name, -1);
+                    createOrResumeScreen("screen -r", name, -1, scheduler);
                 }
                 else if (mode == "s")
                 {
@@ -427,7 +446,7 @@ void startEmulator(Config &config)
                         }
                         else
                         {
-                            createOrResumeScreen("screen -s", name, memSize);
+                            createOrResumeScreen("screen -s", name, memSize, scheduler);
                         }
                     }
                 }
