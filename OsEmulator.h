@@ -337,6 +337,66 @@ void generateReport(const Config &config, bool toConsole = true)
     //}
 }
 
+void generateMemReport(const Config& config)
+{
+    int totalCores = config.getNumCPU();
+    int usedCores = 0;
+
+    int totalMem = config.getMaxOverallMem();
+    int usedMem = 0;
+
+    std::ostringstream output;
+    int runningCount = 0;
+
+    for (const auto& pair : processes.getAll())
+    {
+        const process& proc = pair.second;
+        if (proc.getState() == ProcessState::RUNNING)
+            runningCount++;
+    }
+
+    for (const auto& pair : processes.getAll())
+    {
+        const process& proc = pair.second;
+        MemoryManager* memMgr = proc.getMemoryManager();
+        int memUsed = 0;
+        if (memMgr)
+            memUsed = memMgr->getFramesPerProcess(proc.getPid()) * memMgr->getFrameSize();
+
+        usedMem += memUsed;
+        //std::cout << "  " << proc.getProcessName() << " (PID " << proc.getPid() << "): " << memUsed << " bytes\n";
+    }
+
+
+    usedCores = runningCount;
+    int utilization = (100 * usedCores) / totalCores;
+    output << "CPU-Util" << utilization << "%\n";
+    output << "Memory Usage: " << usedMem << " / " << totalMem << " MiB\n";
+	output << "Memory Utilization: " << (100 * usedMem / totalMem) << "%\n\n";
+    output << "======================================================================\n";
+
+	output << "Running processes and memory usage:\n";
+    output << "----------------------------------------------------------------------\n";
+
+    for (const auto& pair : processes.getAll())
+    {
+        const process& proc = pair.second;
+        if (proc.getState() == ProcessState::RUNNING)
+        {
+            MemoryManager* memMgr = proc.getMemoryManager();
+            int memUsed = 0;
+            if (memMgr)
+                memUsed = memMgr->getFramesPerProcess(proc.getPid()) * memMgr->getFrameSize();
+
+            // Convert bytes to MiB (1 MiB = 1024 * 1024 bytes)
+            int memUsedMiB = memUsed / (1024 * 1024);
+
+            output << proc.getProcessName() << " " << memUsedMiB << "MiB\n";
+        }
+    }
+    output << "----------------------------------------------------------------------\n";
+}
+
 void startEmulator(Config &config)
 {
     string command;
@@ -381,6 +441,10 @@ void startEmulator(Config &config)
         else if (command == "report-util")
         {
             generateReport(config, false); // file
+        }
+        else if (command == "process-smi")
+        {
+            generateMemReport();
         }
         else if (command == "clear")
         {
