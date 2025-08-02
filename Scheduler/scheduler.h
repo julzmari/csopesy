@@ -25,6 +25,8 @@ public:
     int getNumCores() const { return numCores; }
     int getCoreAssignment(int core) const { return coreAssignments[core]; }
     MemoryManager& getMemoryManager() { return memoryManager; }
+	int getIdleTicks() const { return idleTicks; }
+    int getActiveTicks() const { return activeTicks; }
 
 
 private:
@@ -36,6 +38,8 @@ private:
     std::atomic<int> processCounter{0};
     int quantumCycle = 0; 
     int minMemPerProc, maxMemPerProc;
+	int idleTicks = 0;
+	int activeTicks = 0;
     void snapshotMemory(int cycle);
 
     void schedulerThreadFunc();

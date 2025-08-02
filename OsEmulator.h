@@ -397,6 +397,36 @@ void generateMemReport(const Config& config)
     output << "----------------------------------------------------------------------\n";
 }
 
+void vmstat(const Config& config, Scheduler& scheduler)
+{
+    MemoryManager& memoryManager = scheduler.getMemoryManager();
+
+    // Memory stats
+    int totalMem = config.getMaxOverallMem();
+    int usedMem = totalMem - memoryManager.getTotalFreeMemory();
+    int freeMem = memoryManager.getTotalFreeMemory();
+
+    // CPU tick stats (you need to implement these counters in Scheduler)
+    int idleCpuTicks = scheduler.getIdleTicks();     // implement this
+    int activeCpuTicks = scheduler.getActiveTicks(); // implement this
+    int totalCpuTicks = idleCpuTicks + activeCpuTicks;
+
+    // Paging stats (implement these in MemoryManager if needed)
+    int numPagedIn = memoryManager.getNumPagedIn();   // implement this
+    int numPagedOut = memoryManager.getNumPagedOut(); // implement this
+
+    std::cout << "------------------- VMSTAT -------------------\n";
+    std::cout << "Total memory: " << totalMem << " bytes\n";
+    std::cout << "Used memory: " << usedMem << " bytes\n";
+    std::cout << "Free memory: " << freeMem << " bytes\n";
+    std::cout << "Idle cpu ticks: " << idleCpuTicks << "\n";
+    std::cout << "Active cpu ticks: " << activeCpuTicks << "\n";
+    std::cout << "Total cpu ticks: " << totalCpuTicks << "\n";
+    std::cout << "Num paged in: " << numPagedIn << "\n";
+    std::cout << "Num paged out: " << numPagedOut << "\n";
+    std::cout << "----------------------------------------------\n";
+}
+
 void startEmulator(Config &config)
 {
     string command;

@@ -99,6 +99,9 @@ void Scheduler::workerThreadFunc(int coreId)
         int pid = -1;
         {
             std::unique_lock<std::mutex> lock(queueMutex);
+            if (readyQueue.empty()) {
+                idleTicks++;
+            }
             cv.wait(lock, [this]
                     { return !readyQueue.empty() || !running; });
             if (!running)
@@ -133,6 +136,7 @@ void Scheduler::workerThreadFunc(int coreId)
             {
                 for (int i = proc.getCurrentLine(); i < proc.getLineCount(); ++i)
                 {
+                    activeTicks++;
                     auto instruction = proc.getCurrentInstruction();
                     if (instruction)
                     {

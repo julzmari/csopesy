@@ -26,6 +26,8 @@ public:
     bool isValidAddress(uint32_t address) const;
     uint16_t readUint16(uint32_t address) const;
     void writeUint16(uint32_t address, uint16_t value);
+	int getNumPagedIn() const { return numPagedIn; }
+    int getNumPagedOut() const { return numPagedOut; }
 
 private:
     int totalBytes;
@@ -35,4 +37,6 @@ private:
     mutable std::mutex mtx;    // Mutex for thread-safe access, now mutable
     void mergeFreeBlocks();
     std::unordered_map<uint32_t, uint16_t> memory;
+	int numPagedIn = 0;
+	int numPagedOut = 0;
 };

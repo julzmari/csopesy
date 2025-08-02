@@ -33,6 +33,8 @@ bool MemoryManager::allocate(int processId, int bytes)
             blocks[i].numFrames = neededFrames;
             blocks[i].ownerPid = processId;
 
+			numPagedIn += neededFrames;
+
             return true;
         }
     }
@@ -50,6 +52,7 @@ void MemoryManager::free(int processId)
             block.ownerPid = -1;
         }
     }
+	numPagedOut += getFramesPerProcess(processId);
     mergeFreeBlocks();
 }
 
