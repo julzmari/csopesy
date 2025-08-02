@@ -444,7 +444,7 @@ void startEmulator(Config &config)
         }
         else if (command == "process-smi")
         {
-            generateMemReport();
+            generateMemReport(config);
         }
         else if (command == "clear")
         {
