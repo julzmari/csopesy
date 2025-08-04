@@ -20,6 +20,7 @@ public:
     void start();
     void stop();
     void addProcess(const process &proc);
+    void generateInstructionsForProcess(int pid);
     void startBatchGeneration();
     void stopBatchGeneration();
     int getNumCores() const { return numCores; }

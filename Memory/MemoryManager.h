@@ -3,6 +3,25 @@
 #include <utility>
 #include <mutex>
 #include <unordered_map>
+#include <deque>
+#include <fstream>
+struct PageTableEntry
+{
+    int frameNumber;
+    bool valid;
+    bool dirty;
+};
+
+struct pair_hash
+{
+    template <class T1, class T2>
+    std::size_t operator()(const std::pair<T1, T2> &p) const
+    {
+        auto h1 = std::hash<T1>{}(p.first);
+        auto h2 = std::hash<T2>{}(p.second);
+        return h1 ^ h2;
+    }
+};
 
 class MemoryManager
 {
@@ -24,10 +43,14 @@ public:
     int getFrameSize() const;
     std::vector<Block> getBlocksSnapshot() const;
     bool isValidAddress(uint32_t address) const;
-    uint16_t readUint16(uint32_t address) const;
-    void writeUint16(uint32_t address, uint16_t value);
-	int getNumPagedIn() const { return numPagedIn; }
+    uint16_t readUint16(int pid, uint32_t vaddr);
+    void writeUint16(int pid, uint32_t vaddr, uint16_t value);
+    int getNumPagedIn() const { return numPagedIn; }
     int getNumPagedOut() const { return numPagedOut; }
+    void handlePageFault(int pid, int pageNum);
+    void saveProcessToBackingStore(int pid);
+    void loadProcessFromBackingStore(int pid);
+    void evictProcess(int pid);
 
 private:
     int totalBytes;
@@ -39,4 +62,8 @@ private:
     std::unordered_map<uint32_t, uint16_t> memory;
 	int numPagedIn = 0;
 	int numPagedOut = 0;
+    std::unordered_map<int, std::vector<PageTableEntry>> pageTables;
+    std::unordered_map<std::pair<int, int>, std::vector<uint8_t>, pair_hash> backingStore;
+    std::deque<int> frameQueue;
+    std::unordered_map<int, int> frameToPidPage;
 };
