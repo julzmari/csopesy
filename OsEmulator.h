@@ -5,6 +5,7 @@
 #include "process_list.h"
 #include "console.h"
 #include "scheduler.h"
+#include "MemoryManager.h"
 #include "PrintCommand.h"
 #include "DeclareCommand.h"
 #include "AddCommand.h"
@@ -19,7 +20,6 @@
 #include <vector>
 #include <iomanip>
 
-
 using std::cin;
 using std::cout;
 using std::endl;
@@ -30,45 +30,53 @@ using std::string;
 ProcessList processes;
 
 // Function to parse a single instruction
-std::shared_ptr<Command> parseInstruction(const std::string& instruction) {
+std::shared_ptr<Command> parseInstruction(const std::string &instruction)
+{
     std::istringstream iss(instruction);
     std::string cmd;
     iss >> cmd;
-    
-    if (cmd == "DECLARE") {
+
+    if (cmd == "DECLARE")
+    {
         std::string varName;
         uint16_t value;
         iss >> varName >> value;
         return std::make_shared<DeclareCommand>(varName, value);
     }
-    else if (cmd == "ADD") {
+    else if (cmd == "ADD")
+    {
         std::string var1, var2, var3;
         iss >> var1 >> var2 >> var3;
         return std::make_shared<AddCommand>(var1, var2, var3);
     }
-    else if (cmd == "SUBTRACT") {
+    else if (cmd == "SUBTRACT")
+    {
         std::string var1, var2, var3;
         iss >> var1 >> var2 >> var3;
         return std::make_shared<SubtractCommand>(var1, var2, var3);
     }
-    else if (cmd.substr(0, 5) == "PRINT") {
+    else if (cmd.substr(0, 5) == "PRINT")
+    {
         std::string rest = instruction.substr(5); // everything after 'PRINT'
         // Trim whitespace
         rest.erase(0, rest.find_first_not_of(" \t("));
         rest.erase(rest.find_last_not_of(" \t)") + 1);
 
         // Remove surrounding quotes if present
-        if (rest.length() >= 2 && rest[0] == '"' && rest[rest.length()-1] == '"') {
-            rest = rest.substr(1, rest.length()-2);
+        if (rest.length() >= 2 && rest[0] == '"' && rest[rest.length() - 1] == '"')
+        {
+            rest = rest.substr(1, rest.length() - 2);
         }
         return std::make_shared<PrintCommand>(rest);
     }
-    else if (cmd == "SLEEP") {
+    else if (cmd == "SLEEP")
+    {
         uint8_t sleepTime;
         iss >> sleepTime;
         return std::make_shared<SleepCommand>(sleepTime);
     }
-    else if (cmd == "READ") {
+    else if (cmd == "READ")
+    {
         std::string varName;
         std::string addressStr;
         iss >> varName >> addressStr;
@@ -76,38 +84,46 @@ std::shared_ptr<Command> parseInstruction(const std::string& instruction) {
         uint16_t address = std::stoul(addressStr, nullptr, 16);
         return std::make_shared<ReadCommand>(varName, address);
     }
-    else if (cmd == "WRITE") {
+    else if (cmd == "WRITE")
+    {
         std::string addressStr, varName;
         iss >> addressStr >> varName;
         // Parse hex address
         uint16_t address = std::stoul(addressStr, nullptr, 16);
         return std::make_shared<WriteCommand>(address, varName);
     }
-    else {
+    else
+    {
         throw std::runtime_error("Unknown instruction: " + cmd);
     }
 }
 
 // Function to parse instruction string and create commands
-std::vector<std::shared_ptr<Command>> parseInstructions(const std::string& instructionString) {
+std::vector<std::shared_ptr<Command>> parseInstructions(const std::string &instructionString)
+{
     std::vector<std::shared_ptr<Command>> commands;
     std::istringstream iss(instructionString);
     std::string instruction;
-    
-    while (std::getline(iss, instruction, ';')) {
+
+    while (std::getline(iss, instruction, ';'))
+    {
         // Trim whitespace
         instruction.erase(0, instruction.find_first_not_of(" \t"));
         instruction.erase(instruction.find_last_not_of(" \t") + 1);
-        
-        if (!instruction.empty()) {
-            try {
+
+        if (!instruction.empty())
+        {
+            try
+            {
                 commands.push_back(parseInstruction(instruction));
-            } catch (const std::exception& e) {
+            }
+            catch (const std::exception &e)
+            {
                 throw std::runtime_error("Error parsing instruction '" + instruction + "': " + e.what());
             }
         }
     }
-    
+
     return commands;
 }
 
@@ -149,7 +165,7 @@ void printHeader()
 }
 
 // Create or resume screen
-void createOrResumeScreen(const string &cmd, const string &name, int memSize, Scheduler& scheduler)
+void createOrResumeScreen(const string &cmd, const string &name, int memSize, Scheduler &scheduler)
 {
     if (cmd == "screen -s")
     { // Create new process
@@ -159,28 +175,31 @@ void createOrResumeScreen(const string &cmd, const string &name, int memSize, Sc
         }
         else
         {
-            std::vector<std::string> instructions;
             processes.addNewProcess(-1, 0, name);
             int pid = processes.findProcessByName(name);
 
-            if (pid == -1) {
+            if (pid == -1)
+            {
                 cout << "Failed to create process." << endl;
                 return;
             }
 
-            if (!scheduler.getMemoryManager().allocate(pid, memSize)) {
-                cout << "Error: Not enough memory to allocate " << memSize << " bytes for process '" << name << "'." << endl;
-                processes.removeProcess(pid);
-                return;
-            }
-
-            processes.withProcessByRef(pid, [&](process& proc) {
+            processes.withProcessByRef(pid, [&](process &proc)
+                                       {
                 proc.setMemorySize(memSize);
-                proc.setMemoryManager(&scheduler.getMemoryManager());
-                });
+                proc.setMemoryManager(&scheduler.getMemoryManager()); });
 
-            scheduler.addProcess(processes.findProcess(pid));
-            cout << "Process '" << name << "' created and added to scheduler with " << memSize << " bytes of memory." << endl;
+            try
+            {
+                process &procRef = processes.findProcessByRef(pid);
+                scheduler.addProcess(procRef);
+                cout << "Process '" << name << "' created and added to scheduler with " << memSize << " bytes of memory." << endl;
+            }
+            catch (const std::exception &e)
+            {
+                cout << "Error: " << e.what() << endl;
+                processes.removeProcess(pid);
+            }
         }
     }
     else if (cmd == "screen -r")
@@ -202,63 +221,67 @@ void createOrResumeScreen(const string &cmd, const string &name, int memSize, Sc
 
 // Create process with custom instructions
 // Update function signature to accept Scheduler&
-void createProcessWithInstructions(const string &processName, int memorySize, const string &instructions, Scheduler& scheduler)
+void createProcessWithInstructions(const string &processName, int memorySize, const string &instructions, Scheduler &scheduler)
 {
     if (processes.ifProcessNameExists(processName))
     {
         cout << "Process '" << processName << "' already exists." << endl;
         return;
     }
-    
-    try {
+
+    try
+    {
         // Parse instructions
         std::vector<std::shared_ptr<Command>> commands = parseInstructions(instructions);
-        
+
         // Validate instruction count (1-50)
-        if (commands.size() < 1 || commands.size() > 50) {
+        if (commands.size() < 1 || commands.size() > 50)
+        {
             cout << "Invalid command: Instruction count must be between 1 and 50." << endl;
             return;
         }
-        
+
         // Create process
         processes.addNewProcess(-1, 0, processName);
         int pid = processes.findProcessByName(processName);
-        
-        if (pid == -1) {
+
+        if (pid == -1)
+        {
             cout << "Failed to create process." << endl;
             return;
         }
 
-        if (!scheduler.getMemoryManager().allocate(pid, memorySize)) {
-            cout << "Error: Not enough memory to allocate " << memorySize << " bytes for process '" 
+        if (!scheduler.getMemoryManager().allocate(pid, memorySize))
+        {
+            cout << "Error: Not enough memory to allocate " << memorySize << " bytes for process '"
                  << processName << "'." << endl;
             processes.removeProcess(pid);
             return;
         }
-        
+
         // Add instructions to process
-        processes.withProcessByRef(pid, [&](process& proc) {
+        processes.withProcessByRef(pid, [&](process &proc)
+                                   {
             proc.clearInstructions();
             proc.setMemoryManager(&scheduler.getMemoryManager()); 
             proc.setMemorySize(memorySize);
             for (const auto& cmd : commands) {
                 proc.addInstruction(cmd);
-            }
-        });
-        
+            } });
+
         // Add process to scheduler's ready queue
         scheduler.addProcess(processes.findProcess(pid));
-        
+
         cout << "Process '" << processName << "' created with " << commands.size() << " instructions." << endl;
-        
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception &e)
+    {
         cout << "Error creating process: " << e.what() << endl;
     }
 }
 
 void listScreens()
 {
-    //std::cout << "[DIAG] listScreens called" << std::endl;
     processes.printAllProcesses();
 }
 
@@ -329,15 +352,15 @@ void generateReport(const Config &config, bool toConsole = true)
     }
 
     // Diagnostic: print all PIDs and their states at report time
-    //std::cout << "[DIAG] generateReport: process states at report time:" << std::endl;
-    //for (const auto &pair : processes.getAll())
+    // std::cout << "[DIAG] generateReport: process states at report time:" << std::endl;
+    // for (const auto &pair : processes.getAll())
     //{
-     //   const process &proc = pair.second;
+    //   const process &proc = pair.second;
     //    std::cout << "PID: " << pair.first << " State: " << static_cast<int>(proc.getState()) << std::endl;
     //}
 }
 
-void generateMemReport(const Config& config)
+void generateMemReport(const Config &config, Scheduler &scheduler)
 {
     int totalCores = config.getNumCPU();
     int usedCores = 0;
@@ -348,58 +371,52 @@ void generateMemReport(const Config& config)
     std::ostringstream output;
     int runningCount = 0;
 
-    for (const auto& pair : processes.getAll())
+    for (const auto &pair : processes.getAll())
     {
-        const process& proc = pair.second;
+        const process &proc = pair.second;
         if (proc.getState() == ProcessState::RUNNING)
             runningCount++;
+
+        if (scheduler.getMemoryManager().isAllocated(proc.getPid()))
+        {
+            int memUsed = scheduler.getMemoryManager().getFramesPerProcess(proc.getPid()) *
+                          scheduler.getMemoryManager().getFrameSize();
+            usedMem += memUsed;
+        }
     }
-
-    for (const auto& pair : processes.getAll())
-    {
-        const process& proc = pair.second;
-        MemoryManager* memMgr = proc.getMemoryManager();
-        int memUsed = 0;
-        if (memMgr)
-            memUsed = memMgr->getFramesPerProcess(proc.getPid()) * memMgr->getFrameSize();
-
-        usedMem += memUsed;
-        //std::cout << "  " << proc.getProcessName() << " (PID " << proc.getPid() << "): " << memUsed << " bytes\n";
-    }
-
 
     usedCores = runningCount;
     int utilization = (100 * usedCores) / totalCores;
     output << "CPU-Util" << utilization << "%\n";
     output << "Memory Usage: " << usedMem << " / " << totalMem << " MiB\n";
-	output << "Memory Utilization: " << (100 * usedMem / totalMem) << "%\n\n";
+    output << "Memory Utilization: " << (100 * usedMem / totalMem) << "%\n\n";
     output << "======================================================================\n";
 
-	output << "Running processes and memory usage:\n";
+    output << "Running processes and memory usage:\n";
     output << "----------------------------------------------------------------------\n";
 
-    for (const auto& pair : processes.getAll())
+    for (const auto &pair : processes.getAll())
     {
-        const process& proc = pair.second;
+        const process &proc = pair.second;
         if (proc.getState() == ProcessState::RUNNING)
         {
-            MemoryManager* memMgr = proc.getMemoryManager();
+            MemoryManager *memMgr = proc.getMemoryManager();
             int memUsed = 0;
             if (memMgr)
                 memUsed = memMgr->getFramesPerProcess(proc.getPid()) * memMgr->getFrameSize();
-
-            // Convert bytes to MiB (1 MiB = 1024 * 1024 bytes)
-            int memUsedMiB = memUsed / (1024 * 1024);
-
-            output << proc.getProcessName() << " " << memUsedMiB << "MiB\n";
+            if (memUsed >= 1024)
+                output << proc.getProcessName() << " " << (memUsed / 1024) << "KiB\n";
+            else
+                output << proc.getProcessName() << " " << memUsed << "B\n";
         }
     }
     output << "----------------------------------------------------------------------\n";
+    std::cout << output.str();
 }
 
-void vmstat(const Config& config, Scheduler& scheduler)
+void vmstat(const Config &config, Scheduler &scheduler)
 {
-    MemoryManager& memoryManager = scheduler.getMemoryManager();
+    MemoryManager &memoryManager = scheduler.getMemoryManager();
 
     // Memory stats
     int totalMem = config.getMaxOverallMem();
@@ -450,10 +467,7 @@ void startEmulator(Config &config)
     {
         cout << "\nEnter command: ";
         getline(cin, command);
-
         trimSpaces(command);
-
-        //cout << "[DEBUG] Raw command: " << command << endl;
 
         if (command == "scheduler-start")
         {
@@ -465,8 +479,8 @@ void startEmulator(Config &config)
         }
         else if (command == "screen -ls")
         {
-            // listScreens();
-            generateReport(config, true); // console
+            listScreens();
+            // generateReport(config, true);
         }
         else if (command == "report-util")
         {
@@ -474,7 +488,11 @@ void startEmulator(Config &config)
         }
         else if (command == "process-smi")
         {
-            generateMemReport(config);
+            generateMemReport(config, scheduler);
+        }
+        else if (command == "vmstat")
+        {
+            vmstat(config, scheduler);
         }
         else if (command == "clear")
         {
@@ -493,7 +511,7 @@ void startEmulator(Config &config)
             string processName = match[1];
             int memorySize = std::stoi(match[2]);
             string instructions = match[3];
-            
+
             createProcessWithInstructions(processName, memorySize, instructions, scheduler);
         }
         // create new process or resume existing screen session
@@ -502,8 +520,8 @@ void startEmulator(Config &config)
 
             if (regex_match(command, match, pattern))
             {
-                string mode = match[1];  // 's' or 'r'
-                string name = match[2];  // process name
+                string mode = match[1]; // 's' or 'r'
+                string name = match[2]; // process name
 
                 trimSpaces(name);
 
@@ -530,9 +548,9 @@ void startEmulator(Config &config)
                         int memSize = stoi(match[3]);
 
                         auto isPowerOfTwo = [](int n)
-                            {
-                                return n >= 64 && n <= 65536 && (n & (n - 1)) == 0;
-                            };
+                        {
+                            return n >= 64 && n <= 65536 && (n & (n - 1)) == 0;
+                        };
 
                         if (!isPowerOfTwo(memSize))
                         {
