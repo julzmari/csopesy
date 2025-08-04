@@ -118,12 +118,6 @@ Config::Config(const string& filename) :
                     throw out_of_range("mem-per-frame must be between 16 and 65536");
                 }
             }
-            /*else if (key == "mem-per-proc") {
-				iss >> memPerProc;
-                if (memPerProc < 64 || memPerProc > 65536) {
-                    throw out_of_range("mem-per-proc must be between 64 and 65536");
-                }
-            }*/
             else if (key == "min-mem-per-proc") {
                 iss >> minMemPerProc;
                 if (minMemPerProc < 64 || minMemPerProc > 65536) {
