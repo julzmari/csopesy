@@ -333,6 +333,7 @@ void MemoryManager::saveProcessToBackingStore(int pid)
         }
         entry.valid = false;
     }
+    writeBackingStoreToFile("csopesy-backing-store.txt");
 }
 
 void MemoryManager::evictProcess(int pid)
@@ -355,4 +356,26 @@ void MemoryManager::evictProcess(int pid)
         else
             ++it;
     }
+}
+
+void MemoryManager::writeBackingStoreToFile(const std::string& filename) const
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    std::ofstream out(filename);
+    if (!out) return;
+
+    for (const auto& entry : backingStore)
+    {
+        int pid = entry.first.first;
+        int pageNum = entry.first.second;
+        const std::vector<uint8_t>& pageData = entry.second;
+
+        out << pid << " " << pageNum << " ";
+        for (uint8_t byte : pageData)
+        {
+            out << static_cast<int>(byte) << " ";
+        }
+        out << "\n";
+    }
+    out.close();
 }

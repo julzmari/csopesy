@@ -51,6 +51,7 @@ public:
     void saveProcessToBackingStore(int pid);
     void loadProcessFromBackingStore(int pid);
     void evictProcess(int pid);
+    void writeBackingStoreToFile(const std::string& filename) const;
 
 private:
     int totalBytes;
