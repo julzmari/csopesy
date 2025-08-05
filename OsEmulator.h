@@ -480,8 +480,8 @@ void startEmulator(Config &config)
         }
         else if (command == "screen -ls")
         {
-            listScreens();
-            // generateReport(config, true);
+            generateReport(config, true);
+            //listScreens();
         }
         else if (command == "report-util")
         {
