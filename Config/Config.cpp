@@ -75,7 +75,7 @@ Config::Config(const string& filename) :
             }
             else if (key == "quantum-cycles") {
                 iss >> quantumCycles;
-                if (quantumCycles < 1 || quantumCycles > 4294967296) {
+                if (quantumCycles < 0 || quantumCycles > 4294967296) {
                     throw out_of_range("quantum-cycles must be between 1 and 4294967296");
                 }
             }
