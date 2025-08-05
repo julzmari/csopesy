@@ -448,7 +448,8 @@ void startEmulator(Config &config)
 {
     string command;
     regex pattern(R"(^screen -([rs])(?:\s+([^\s]+))(?:\s+(\d+))?\s*$)");
-    regex customPattern("^screen -c\\s+(\\S+)\\s+(\\d+)\\s+\"(.*)\"\\s*$");
+    regex customPattern(R"REG(^screen -c\s+(\S+)(?:\s+(\d+))?\s+"(.*)"\s*$)REG");
+
 
     smatch match;
     MemoryManager memoryManager(config.getMaxOverallMem(), config.getMemPerFrame());
@@ -509,10 +510,12 @@ void startEmulator(Config &config)
         else if (std::regex_match(command, match, customPattern))
         {
             string processName = match[1];
-            int memorySize = std::stoi(match[2]);
+            int memorySize = match[2].matched ? std::stoi(match[2]) : config.getMinMemPerProc();
             string instructions = match[3];
 
             createProcessWithInstructions(processName, memorySize, instructions, scheduler);
+
+
         }
         // create new process or resume existing screen session
         else if (std::regex_match(command, match, pattern))

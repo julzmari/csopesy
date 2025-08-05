@@ -23,7 +23,7 @@ int main() {
     
         if (command == "initialize") {
             startEmulator(config);
-            break;
+            
         } else if (command == "exit") {
             std::cout << "Exiting program..." << std::endl;
             break;
