@@ -1,6 +1,7 @@
 #include "MemoryManager.h"
 #include <algorithm>
 #include <iostream> // Added for diagnostic prints
+#include <string>
 
 MemoryManager::MemoryManager(int totalBytes, int frameBytes)
     : totalBytes(totalBytes), frameBytes(frameBytes)
