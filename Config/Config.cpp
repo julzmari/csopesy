@@ -17,7 +17,11 @@ Config::Config(const string& filename) :
     batchProcessFreq(0),
     minIns(0),
     maxIns(0),
-    delaysPerExec(0)
+    delaysPerExec(0),
+    maxOverallMem(0),
+    memPerFrame(0),
+	minMemPerProc(0),
+	maxMemPerProc(0)
 {
 
     std::vector<fs::path> possiblePaths = {
@@ -71,7 +75,7 @@ Config::Config(const string& filename) :
             }
             else if (key == "quantum-cycles") {
                 iss >> quantumCycles;
-                if (quantumCycles < 1 || quantumCycles > 4294967296) {
+                if (quantumCycles < 0 || quantumCycles > 4294967296) {
                     throw out_of_range("quantum-cycles must be between 1 and 4294967296");
                 }
             }
@@ -114,9 +118,15 @@ Config::Config(const string& filename) :
                     throw out_of_range("mem-per-frame must be between 16 and 65536");
                 }
             }
-            else if (key == "mem-per-proc") {
-				iss >> memPerProc;
-                if (memPerProc < 64 || memPerProc > 65536) {
+            else if (key == "min-mem-per-proc") {
+                iss >> minMemPerProc;
+                if (minMemPerProc < 64 || minMemPerProc > 65536) {
+                    throw out_of_range("mem-per-proc must be between 64 and 65536");
+                }
+            }
+            else if (key == "max-mem-per-proc") {
+                iss >> maxMemPerProc;
+                if (maxMemPerProc < 64 || maxMemPerProc > 65536) {
                     throw out_of_range("mem-per-proc must be between 64 and 65536");
                 }
             }
@@ -142,5 +152,9 @@ void Config::printConfig() const {
     cout << setw(colWidth) << "Min Instructions/Process:" << minIns << "\n";
     cout << setw(colWidth) << "Max Instructions/Process:" << maxIns << "\n";
     cout << setw(colWidth) << "Delay per Execution:" << delaysPerExec << " cycles\n";
+	cout << setw(colWidth) << "Max Overall Memory:" << maxOverallMem << " KB\n";
+	cout << setw(colWidth) << "Memory per Frame:" << memPerFrame << " KB\n";
+	cout << setw(colWidth) << "Min Memory per Process:" << minMemPerProc << " KB\n";
+	cout << setw(colWidth) << "Max Memory per Process:" << maxMemPerProc << " KB\n";
     cout << "===========================\n";
 }

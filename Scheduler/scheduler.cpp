@@ -32,7 +32,8 @@ Scheduler::Scheduler(ProcessList &plist, Config &config, MemoryManager &memManag
       schedulerType(config.getSchedulerAlgorithm()),
       quantum(config.getQuantumCycles()),
       memoryManager(memManager),
-      memPerProc(config.getMemPerProc()),
+      minMemPerProc(config.getMinMemPerProc()),
+      maxMemPerProc(config.getMaxMemPerProc()),
       coreAssignments(config.getNumCPU(), -1)
 {
 }
@@ -60,11 +61,71 @@ void Scheduler::addProcess(const process &proc)
 {
     if (proc.getPid() == -1)
         return;
+
+    if (!running)
+    {
+        start();
+    }
+
+    if (proc.getLineCount() == 0)
+    {
+        generateInstructionsForProcess(proc.getPid());
+    }
+
     {
         std::lock_guard<std::mutex> lock(queueMutex);
         readyQueue.push(proc.getPid());
     }
     cv.notify_one();
+}
+
+void Scheduler::generateInstructionsForProcess(int pid)
+{
+    processList.withProcessByRef(pid, [&](process &proc)
+                                 {
+        int insCount = minIns + rand() % (maxIns - minIns + 1);
+        
+        std::unordered_map<std::string, int> instrCount = {
+            {"DECLARE", 0}, {"ADD", 0}, {"SUBTRACT", 0}, 
+            {"PRINT", 0}, {"SLEEP", 0}, {"FOR", 0}
+        };
+
+        std::vector<std::string> instrTypes = {
+            "DECLARE", "ADD", "SUBTRACT", "PRINT", "SLEEP", "FOR"
+        };
+
+        int remaining = insCount;
+        int typeIndex = 0;
+        while (remaining > 0) {
+            instrCount[instrTypes[typeIndex]]++;
+            remaining--;
+            typeIndex = (typeIndex + 1) % instrTypes.size();
+        }
+
+        std::vector<std::shared_ptr<Command>> cmds;
+        int totalIns = 0;
+
+        for (int i = 0; i < instrCount["DECLARE"] && totalIns < maxIns; ++i) {
+            std::string varName = "var" + std::to_string(i);
+            uint16_t value = rand() % 65536;
+            cmds.push_back(std::make_shared<DeclareCommand>(varName, value));
+            totalIns++;
+        }
+        
+        for (int i = 0; i < instrCount["PRINT"] && totalIns < maxIns; ++i) {
+            cmds.push_back(std::make_shared<PrintCommand>());
+            totalIns++;
+        }
+        
+        while (totalIns < insCount && totalIns < maxIns) {
+            cmds.push_back(std::make_shared<PrintCommand>());
+            totalIns++;
+        }
+
+        proc.clearInstructions();
+        for (const auto &cmd : cmds) {
+            proc.addInstruction(cmd);
+        } });
 }
 
 void Scheduler::schedulerThreadFunc()
@@ -98,6 +159,10 @@ void Scheduler::workerThreadFunc(int coreId)
         int pid = -1;
         {
             std::unique_lock<std::mutex> lock(queueMutex);
+            if (readyQueue.empty())
+            {
+                idleTicks++;
+            }
             cv.wait(lock, [this]
                     { return !readyQueue.empty() || !running; });
             if (!running)
@@ -109,11 +174,15 @@ void Scheduler::workerThreadFunc(int coreId)
         try
         {
             process &proc = processList.findProcessByRef(pid);
+            int requiredMemory = proc.getMemorySize();
+
             if (!memoryManager.isAllocated(proc.getPid()))
             {
-                if (!memoryManager.allocate(proc.getPid(), memPerProc))
+                if (!memoryManager.allocate(proc.getPid(), requiredMemory))
                 {
-                    proc.setState(ProcessState::READY);
+                    proc.setState(ProcessState::WAITING);
+
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     {
                         std::lock_guard<std::mutex> lock(queueMutex);
                         readyQueue.push(proc.getPid());
@@ -121,15 +190,17 @@ void Scheduler::workerThreadFunc(int coreId)
                     cv.notify_one();
                     continue;
                 }
+                proc.setMemoryManager(&memoryManager);
             }
 
             proc.setState(ProcessState::RUNNING);
-            proc.setCoreId(coreId);
+            coreAssignments[coreId] = proc.getPid();
 
             if (schedulerType == SchedulerAlgorithm::FCFS)
             {
                 for (int i = proc.getCurrentLine(); i < proc.getLineCount(); ++i)
                 {
+                    activeTicks++;
                     auto instruction = proc.getCurrentInstruction();
                     if (instruction)
                     {
@@ -144,31 +215,28 @@ void Scheduler::workerThreadFunc(int coreId)
 
             else if (schedulerType == SchedulerAlgorithm::RR)
             {
-                int linesRun = 0;
-                for (; linesRun < quantum && proc.getCurrentLine() < proc.getLineCount(); ++linesRun)
+                int startLine = proc.getCurrentLine();
+                int endLine = startLine + quantum;
+                if (endLine > proc.getLineCount())
+                    endLine = proc.getLineCount();
+
+                for (int i = startLine; i < endLine; ++i)
                 {
+                    activeTicks++;
                     auto instruction = proc.getCurrentInstruction();
                     if (instruction)
                     {
                         instruction->execute(proc);
                     }
-                    proc.setCurrentLine(proc.getCurrentLine() + 1);
+                    proc.setCurrentLine(i + 1);
                     std::this_thread::sleep_for(std::chrono::milliseconds(delaysPerExec));
                 }
-
-                int currentCycle;
-                {
-                    std::lock_guard<std::mutex> lock(queueMutex);
-                    currentCycle = ++quantumCycle;
-                }
-                snapshotMemory(currentCycle);
 
                 if (proc.getCurrentLine() >= proc.getLineCount())
                 {
                     proc.setState(ProcessState::FINISHED);
                     memoryManager.free(proc.getPid());
                 }
-
                 else
                 {
                     proc.setState(ProcessState::READY);
@@ -178,6 +246,16 @@ void Scheduler::workerThreadFunc(int coreId)
                     }
                     cv.notify_one();
                 }
+            }
+
+            else
+            {
+                proc.setState(ProcessState::READY);
+                {
+                    std::lock_guard<std::mutex> lock(queueMutex);
+                    readyQueue.push(proc.getPid());
+                }
+                cv.notify_one();
             }
         }
 
@@ -217,7 +295,7 @@ void Scheduler::snapshotMemory(int cycle)
     int extFrag = 0;
     for (const auto &block : blocks)
     {
-        if (block.ownerPid == -1 && frameSize > 0 && (block.numFrames * frameSize) < memPerProc)
+        if (block.ownerPid == -1 && frameSize > 0 && (block.numFrames * frameSize) < minMemPerProc)
         {
             extFrag += block.numFrames * frameSize;
         }
@@ -300,7 +378,6 @@ void Scheduler::startBatchGeneration()
         while (batchGenerating) {
             try {
                 int insCount = minIns + rand() % (maxIns - minIns + 1);
-                std::vector<std::shared_ptr<Command>> cmds;
                 std::string procName = "Process" + std::to_string(++processCounter);
 
                 processList.addNewProcess(-1, 0, procName);
@@ -311,7 +388,14 @@ void Scheduler::startBatchGeneration()
                     continue;
                 }
 
+                std::vector<std::shared_ptr<Command>> cmds;
+
                 processList.withProcessByRef(pid, [&](process &proc) {
+                    int minExp = static_cast<int>(log2(minMemPerProc));
+                    int maxExp = static_cast<int>(log2(maxMemPerProc));
+                    int randExp = minExp + (rand() % (maxExp - minExp + 1));
+                    int memSize = 1 << randExp;
+
                     std::unordered_map<std::string, int> instrCount = {
                         {"DECLARE", 0},
                         {"ADD", 0},
@@ -384,12 +468,22 @@ void Scheduler::startBatchGeneration()
                         totalIns += 1;
                     }
 
+                    proc.setMemorySize(memSize);
                     proc.clearInstructions();
                     for (const auto &cmd : cmds) {
                         proc.addInstruction(cmd);
                     }
-                    addProcess(proc);
                 });
+
+                try
+                {
+                    process &procRef = processList.findProcessByRef(pid);
+                    addProcess(procRef);
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << "[ERROR] Failed to add batch process: " << e.what() << std::endl;
+                }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(batchFreq));
             } catch (const std::exception& ex) {

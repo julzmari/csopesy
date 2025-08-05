@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include "Command.h"
 #include "ForCommand.h"
+#include <MemoryManager.h>
 
 enum class ProcessState
 {
@@ -44,18 +45,23 @@ private:
 	std::vector<std::string> logs; // for print command
 	bool isSleeping = false;
 	uint8_t sleepTime = 0; // in milliseconds for sleep state
+	MemoryManager *memoryManager = nullptr;
+	int memorySize = 0;
 
 public:
 	std::unordered_map<std::string, uint16_t> variables;
 	// Constructor
-	process(int pid, int coreId, int priority, const std::string &processName, const std::vector<std::shared_ptr<Command>> &instructions)
-		: pid(pid), coreId(coreId), priority(priority), processName(processName), instructions(instructions)
+	process(int pid, int coreId, int priority, const std::string &processName,
+			const std::vector<std::shared_ptr<Command>> &instructions,
+			MemoryManager *memMgr)
+		: pid(pid), coreId(coreId), priority(priority), processName(processName),
+		  instructions(instructions), memoryManager(memMgr)
 	{
 		creationTime = getCurrentTimeString();
 		state = ProcessState::READY;
 	}
 
-	process() : pid(0), coreId(-1), priority(0), processName("")
+	process() : pid(0), coreId(-1), priority(0), processName(""), memoryManager(nullptr)
 	{
 		creationTime = getCurrentTimeString();
 		state = ProcessState::READY;
@@ -75,6 +81,15 @@ public:
 	}
 
 	// Getters and setters
+	MemoryManager *getMemoryManager() const { return memoryManager; }
+	void setMemorySize(int size) { memorySize = size; }
+	int getMemorySize() const { return memorySize; }
+
+	void setMemoryManager(MemoryManager *mgr)
+	{
+		memoryManager = mgr;
+	}
+
 	const std::vector<std::string> &getLogs() const
 	{
 		return logs;
@@ -106,7 +121,7 @@ public:
 	}
 	void setState(ProcessState newState)
 	{
-		//std::cout << "[DIAG] setState called for PID " << pid << " from " << static_cast<int>(state) << " to " << static_cast<int>(newState) << std::endl;
+		// std::cout << "[DIAG] setState called for PID " << pid << " from " << static_cast<int>(state) << " to " << static_cast<int>(newState) << std::endl;
 		state = newState;
 	}
 	ProcessState getState() const
@@ -129,20 +144,39 @@ public:
 		instructions.clear();
 	}
 
+	void setInstructions(const std::vector<std::shared_ptr<Command>> &instr)
+	{
+		instructions = instr;
+	}
+
+	int getInstructionCount() const
+	{
+		return instructions.size();
+	}
+
+	void incrementCurrentLine()
+	{
+		currentLine++;
+	}
+
 	int getLineCount() const
 	{
 		int count = 0;
-		for (const auto& cmd : instructions) {
+		for (const auto &cmd : instructions)
+		{
 			count += getCommandLineCount(cmd);
 		}
 		return count;
 	}
 
-	int getCommandLineCount(const std::shared_ptr<Command>& cmd) const {
+	int getCommandLineCount(const std::shared_ptr<Command> &cmd) const
+	{
 		auto forCmd = std::dynamic_pointer_cast<ForCommand>(cmd);
-		if (forCmd) {
+		if (forCmd)
+		{
 			int bodyCount = 0;
-			for (const auto& inner : forCmd->instructions) {
+			for (const auto &inner : forCmd->instructions)
+			{
 				bodyCount += getCommandLineCount(inner);
 			}
 			return bodyCount * forCmd->repeats;

@@ -10,7 +10,7 @@ process ProcessList::findProcess(int pid)
 	}
 	else
 	{
-		return process(-1, -1, -1, "Unknown", {}); // Return an invalid process if not found
+		return process(-1, -1, -1, "Unknown", {}, nullptr); // Return an invalid process if not found
 	}
 }
 
@@ -51,13 +51,18 @@ process &ProcessList::findProcessByRef(int pid)
 void ProcessList::addNewProcess(int coreId, int priority, const std::string &processName)
 {
 	std::lock_guard<std::mutex> lock(mtx);
-	int newPid = getNextAvailablePid();
-	process newProc(newPid, coreId, priority, processName, {});
-	processMap[newPid] = newProc;
+
 	if (nameToPidMap.find(processName) != nameToPidMap.end())
 	{
 		throw std::runtime_error("Process name already exists!");
 	}
+
+	int newPid = getNextAvailablePid();
+	process newProc(newPid, coreId, priority, processName, {}, nullptr);
+
+	newProc.setState(ProcessState::READY);
+
+	processMap[newPid] = newProc;
 	nameToPidMap[processName] = newPid;
 }
 
@@ -69,6 +74,26 @@ void ProcessList::updateProcess(const process &proc)
 	if (it != processMap.end())
 	{
 		it->second = proc;
+	}
+}
+
+void ProcessList::removeProcess(int pid)
+{
+	std::lock_guard<std::mutex> lock(mtx);
+
+	auto it = processMap.find(pid);
+	processMap.erase(pid);
+
+	for (auto it = nameToPidMap.begin(); it != nameToPidMap.end();)
+	{
+		if (it->second == pid)
+		{
+			it = nameToPidMap.erase(it);
+		}
+		else
+		{
+			++it;
+		}
 	}
 }
 
@@ -85,34 +110,60 @@ void ProcessList::printAllProcesses()
 		std::cout << "No processes found." << std::endl;
 		return;
 	}
+
 	std::cout << "-----------------------------------\nRunning processes:\n";
+	int runningCount = 0;
 	for (const auto &pair : processMap)
 	{
 		const process &proc = pair.second;
 		if (proc.getState() == ProcessState::RUNNING)
 		{
 			proc.printProcessInfo();
+			runningCount++;
 		}
 	}
-	std::cout << "\nReady processes:\n";
-	for (const auto &pair : processMap)
-	{
-		const process &proc = pair.second;
-		if (proc.getState() == ProcessState::READY)
-		{
-			proc.printProcessInfo();
-		}
-	}
+	if (runningCount == 0)
+		std::cout << "None\n";
+
+	// std::cout << "\nReady processes:\n";
+	// int readyCount = 0;
+	// for (const auto &pair : processMap)
+	// {
+	// 	const process &proc = pair.second;
+	// 	if (proc.getState() == ProcessState::READY)
+	// 	{
+	// 		proc.printProcessInfo();
+	// 		readyCount++;
+	// 	}
+	// }
+	// if (readyCount == 0)
+	// 	std::cout << "None\n";
+
+	// std::cout << "\nWaiting processes (insufficient memory):\n";
+	// int waitingCount = 0;
+	// for (const auto &pair : processMap)
+	// {
+	// 	const process &proc = pair.second;
+	// 	if (proc.getState() == ProcessState::WAITING)
+	// 	{
+	// 		proc.printProcessInfo();
+	// 		waitingCount++;
+	// 	}
+	// }
+	// if (waitingCount == 0)
+	// 	std::cout << "None\n";
 
 	std::cout << "\nFinished processes:\n";
+	int finishedCount = 0;
 	for (const auto &pair : processMap)
 	{
 		const process &proc = pair.second;
 		if (proc.getState() == ProcessState::FINISHED)
 		{
 			proc.printProcessInfo();
+			finishedCount++;
 		}
 	}
-	
-    
+	if (finishedCount == 0)
+		std::cout << "None\n";
 }

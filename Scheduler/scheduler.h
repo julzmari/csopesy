@@ -20,10 +20,15 @@ public:
     void start();
     void stop();
     void addProcess(const process &proc);
+    void generateInstructionsForProcess(int pid);
     void startBatchGeneration();
     void stopBatchGeneration();
     int getNumCores() const { return numCores; }
     int getCoreAssignment(int core) const { return coreAssignments[core]; }
+    MemoryManager& getMemoryManager() { return memoryManager; }
+	int getIdleTicks() const { return idleTicks; }
+    int getActiveTicks() const { return activeTicks; }
+
 
 private:
     int batchFreq;
@@ -33,7 +38,9 @@ private:
     int numCores;
     std::atomic<int> processCounter{0};
     int quantumCycle = 0; 
-    int memPerProc; // Store memPerProc from config
+    int minMemPerProc, maxMemPerProc;
+	int idleTicks = 0;
+	int activeTicks = 0;
     void snapshotMemory(int cycle);
 
     void schedulerThreadFunc();

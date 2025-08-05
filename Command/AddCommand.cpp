@@ -19,11 +19,15 @@ AddCommand::AddCommand(const std::string& var1, uint16_t value1, uint16_t value2
 void AddCommand::execute(process& context) {
     uint16_t value1 = findValue(op1, context);
     uint16_t value2 = findValue(op2, context);
-    if (context.variables.find(targetVar) == context.variables.end()) { //if not exists
-        context.variables[targetVar] = value1 + value2;
-    } else {
-        context.variables[targetVar] += value1 + value2;
-    }
+
+    // Always overwrite the target variable with the sum
+    context.variables[targetVar] = value1 + value2;
+
+    // Optional: Log the result for debugging
+    std::stringstream ss;
+    ss << "ADD: " << targetVar << " = " << value1 << " + " << value2
+       << " = " << context.variables[targetVar];
+    context.addLog(ss);
 }
 
 uint16_t AddCommand::findValue(const std::string& varName, process& context) const {

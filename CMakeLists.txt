@@ -30,6 +30,7 @@ add_executable (CSOPESY_MCO
 				"Scheduler/scheduler.h" "Scheduler/scheduler.cpp"
 				"Command/Command.h"    "Command/DeclareCommand.cpp" "Command/DeclareCommand.h" 
 				"Command/AddCommand.cpp" "Command/AddCommand.h" "Command/SubtractCommand.cpp" "Command/SubtractCommand.h" "Command/SleepCommand.h" "Command/SleepCommand.cpp" "Command/ForCommand.cpp" "Command/ForCommand.h"
+				"Command/ReadCommand.h" "Command/ReadCommand.cpp" "Command/WriteCommand.h" "Command/WriteCommand.cpp"
 				"Memory/MemoryManager.cpp" "Memory/MemoryManager.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
