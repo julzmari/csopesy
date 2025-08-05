@@ -387,7 +387,7 @@ void generateMemReport(const Config &config, Scheduler &scheduler)
 
     usedCores = runningCount;
     int utilization = (100 * usedCores) / totalCores;
-    output << "CPU-Util" << utilization << "%\n";
+    output << "CPU-Util: " << utilization << "%\n";
     output << "Memory Usage: " << usedMem << " / " << totalMem << " MiB\n";
     output << "Memory Utilization: " << (100 * usedMem / totalMem) << "%\n\n";
     output << "======================================================================\n";
@@ -407,7 +407,7 @@ void generateMemReport(const Config &config, Scheduler &scheduler)
             if (memUsed >= 1024)
                 output << proc.getProcessName() << " " << (memUsed / 1024) << "KiB\n";
             else
-                output << proc.getProcessName() << " " << memUsed << "B\n";
+                output << proc.getProcessName() << " " << memUsed << "MiB\n";
         }
     }
     output << "----------------------------------------------------------------------\n";
